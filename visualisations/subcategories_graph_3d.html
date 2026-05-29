@@ -1,0 +1,1144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EU-FarmBook — Unified Subcategories Knowledge Map (3D)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..900,0..100&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:        #0c0a14;
+      --ink-2:      #14111f;
+      --ink-3:      #1c182a;
+      --paper:      #f4ead5;
+      --paper-dim:  #d9cfb8;
+      --muted:      #8a8499;
+      --line:       rgba(244, 234, 213, 0.10);
+      --line-2:     rgba(244, 234, 213, 0.18);
+
+      --amber:      #f5b942;
+      --amber-soft: #d99c2b;
+      --rose:       #e07856;
+      --violet:     #b39ddb;
+      --teal:       #5fb3a3;
+      --sage:       #9bbf8a;
+      --sky:        #7da7d9;
+      --lavender:   #a594d1;
+
+      --strong:     #f5b942;
+      --partial:    #b39ddb;
+      --weak:       #6b6478;
+
+      --serif: 'Fraunces', ui-serif, Georgia, serif;
+      --sans:  'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+      --mono:  'IBM Plex Mono', ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: var(--sans);
+      background: var(--ink);
+      color: var(--paper);
+      overflow: hidden;
+      font-size: 14px;
+      letter-spacing: -0.005em;
+    }
+
+    /* Subtle grain + radial vignette over the whole canvas */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(245,185,66,0.06), transparent 55%),
+        radial-gradient(ellipse at 80% 80%, rgba(179,157,219,0.05), transparent 50%);
+      z-index: 1;
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+      opacity: 0.6;
+      mix-blend-mode: overlay;
+      z-index: 2;
+    }
+
+    #graph { position: fixed; inset: 0; z-index: 0; }
+
+    /* ===== Top-left control panel ===== */
+    .panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 340px;
+      max-width: calc(100vw - 40px);
+      background: linear-gradient(180deg, rgba(20,17,31,0.92) 0%, rgba(12,10,20,0.94) 100%);
+      border: 1px solid var(--line-2);
+      border-radius: 4px;
+      padding: 0;
+      box-shadow:
+        0 30px 60px -20px rgba(0,0,0,0.6),
+        0 0 0 1px rgba(245,185,66,0.04) inset;
+      z-index: 10;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .panel-header {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-eyebrow {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 6px;
+      opacity: 0.85;
+    }
+    .panel-title {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-variation-settings: "opsz" 144, "SOFT" 50;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin: 0;
+      color: var(--paper);
+    }
+    .panel-title em {
+      font-style: italic;
+      font-variation-settings: "opsz" 144, "SOFT" 100;
+      color: var(--amber);
+    }
+    .panel-sub {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--muted);
+      margin: 8px 0 0;
+    }
+
+    .panel-body { padding: 16px 20px 18px; }
+
+    .field {
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .field-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+    input, select {
+      width: 100%;
+      background: rgba(244,234,213,0.03);
+      border: 1px solid var(--line);
+      color: var(--paper);
+      border-radius: 2px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-family: var(--sans);
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--amber);
+      background: rgba(245,185,66,0.04);
+    }
+    input::placeholder { color: var(--muted); }
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%238a8499' fill='none' stroke-width='1.4'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 30px;
+    }
+
+    .row { display: flex; gap: 8px; }
+    .row > * { flex: 1; }
+
+    button.action {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--line-2);
+      color: var(--paper);
+      padding: 9px 12px;
+      border-radius: 2px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 160ms ease;
+      margin-top: 4px;
+    }
+    button.action:hover {
+      background: var(--amber);
+      color: var(--ink);
+      border-color: var(--amber);
+    }
+    button.action.toggle.on {
+      background: rgba(245,185,66,0.12);
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+    button.action.toggle.on:hover {
+      background: var(--amber);
+      color: var(--ink);
+    }
+
+    /* ===== Stats strip ===== */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      margin: 14px 0 0;
+    }
+    .stat {
+      background: var(--ink-2);
+      padding: 10px 12px;
+    }
+    .stat-num {
+      font-family: var(--serif);
+      font-variation-settings: "opsz" 72;
+      font-size: 22px;
+      line-height: 1;
+      color: var(--paper);
+      letter-spacing: -0.02em;
+    }
+    .stat-num em {
+      font-style: italic;
+      color: var(--amber);
+    }
+    .stat-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ===== Legend ===== */
+    .legend-block {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+    .legend-title {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .legend-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 12px;
+      font-size: 11.5px;
+      color: var(--paper-dim);
+    }
+    .legend-grid .item {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 99px;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.3);
+    }
+
+    .legend-strength {
+      display: flex;
+      gap: 14px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 11px;
+      color: var(--paper-dim);
+    }
+    .legend-strength .item { display: flex; align-items: center; gap: 6px; }
+    .stroke {
+      display: inline-block;
+      width: 18px; height: 2px;
+      border-radius: 2px;
+    }
+    .stroke.s-strong  { background: var(--strong); height: 2.5px; box-shadow: 0 0 8px rgba(245,185,66,0.5); }
+    .stroke.s-partial { background: var(--partial); height: 2px; opacity: 0.85; }
+    .stroke.s-weak    { background: var(--weak); height: 1px; opacity: 0.7; }
+
+    /* ===== Right info panel ===== */
+    #info {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      width: 380px;
+      max-width: calc(100vw - 40px);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      background: linear-gradient(180deg, rgba(20,17,31,0.95) 0%, rgba(12,10,20,0.96) 100%);
+      border: 1px solid var(--line-2);
+      border-radius: 4px;
+      padding: 0;
+      box-shadow: 0 30px 60px -20px rgba(0,0,0,0.6);
+      z-index: 10;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: none;
+      transform: translateX(20px);
+      opacity: 0;
+      transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 240ms ease;
+    }
+    #info.show {
+      display: block;
+      transform: translateX(0);
+      opacity: 1;
+    }
+    #info::-webkit-scrollbar { width: 6px; }
+    #info::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+
+    .info-header {
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+    .info-close {
+      position: absolute;
+      top: 14px; right: 14px;
+      width: 26px; height: 26px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 99px;
+      font-size: 14px;
+      line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 160ms ease;
+    }
+    .info-close:hover { color: var(--paper); border-color: var(--amber); }
+
+    .info-eyebrow {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 6px;
+    }
+    .info-title {
+      font-family: var(--serif);
+      font-variation-settings: "opsz" 144, "SOFT" 30;
+      font-size: 24px;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin: 0;
+      padding-right: 36px;
+      color: var(--paper);
+    }
+    .info-userlabel {
+      font-family: var(--serif);
+      font-style: italic;
+      font-variation-settings: "opsz" 72, "SOFT" 100;
+      font-size: 14px;
+      color: var(--amber);
+      margin-top: 4px;
+    }
+
+    .info-body { padding: 16px 22px 22px; }
+
+    .info-section {
+      margin-bottom: 16px;
+    }
+    .info-section-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .info-section-text {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--paper-dim);
+    }
+
+    .info-divider {
+      height: 1px;
+      background: var(--line);
+      margin: 14px 0;
+    }
+
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 2px;
+      background: rgba(244,234,213,0.05);
+      border: 1px solid var(--line);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: var(--paper-dim);
+    }
+    .badge .dot { width: 6px; height: 6px; }
+
+    .connection-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .connection-item {
+      display: grid;
+      grid-template-columns: 8px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 7px 0;
+      border-top: 1px solid var(--line);
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: color 140ms ease;
+    }
+    .connection-item:first-child { border-top: 0; }
+    .connection-item:hover { color: var(--amber); }
+    .connection-item .dot { width: 8px; height: 8px; }
+    .connection-item .name { color: var(--paper-dim); line-height: 1.3; }
+    .connection-item:hover .name { color: var(--amber); }
+    .connection-item .strength {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .connection-item .strength.s-strong  { color: var(--amber); }
+    .connection-item .strength.s-partial { color: var(--violet); }
+    .connection-item .strength.s-weak    { color: var(--muted); }
+
+    .rationale {
+      font-family: var(--serif);
+      font-style: italic;
+      font-variation-settings: "opsz" 14, "SOFT" 100;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--paper-dim);
+      padding-left: 14px;
+      border-left: 2px solid var(--amber);
+      margin: 8px 0 4px 18px;
+    }
+
+    /* ===== Bottom-right hint ===== */
+    .hint {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      z-index: 5;
+      display: flex;
+      gap: 18px;
+    }
+    .hint span { display: flex; align-items: center; gap: 6px; }
+    .hint kbd {
+      display: inline-block;
+      padding: 2px 6px;
+      border: 1px solid var(--line-2);
+      border-radius: 2px;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--paper-dim);
+    }
+
+    /* ===== Watermark ===== */
+    .watermark {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      font-family: var(--serif);
+      font-style: italic;
+      font-variation-settings: "opsz" 144, "SOFT" 100;
+      font-size: 11px;
+      color: var(--muted);
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    /* Scrollbars on panel body */
+    .panel-body { max-height: calc(100vh - 220px); overflow-y: auto; }
+    .panel-body::-webkit-scrollbar { width: 6px; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+
+    @media (max-width: 760px) {
+      .panel { width: calc(100vw - 40px); }
+      #info { width: calc(100vw - 40px); top: auto; bottom: 20px; right: 20px; max-height: 50vh; }
+      .hint { display: none; }
+    }
+  </style>
+  <script src="https://unpkg.com/three@0.149.0/build/three.min.js" crossorigin="anonymous"
+          onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js';s.crossOrigin='anonymous';document.head.appendChild(s);"></script>
+  <script src="https://unpkg.com/three-spritetext@1.8.1/dist/three-spritetext.min.js" crossorigin="anonymous"
+          onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/three-spritetext@1.8.1/dist/three-spritetext.min.js';s.crossOrigin='anonymous';document.head.appendChild(s);"></script>
+  <script src="https://unpkg.com/3d-force-graph@1.73.4/dist/3d-force-graph.min.js" crossorigin="anonymous"
+          onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/3d-force-graph@1.73.4/dist/3d-force-graph.min.js';s.crossOrigin='anonymous';s.onerror=function(){document.body.insertAdjacentHTML('afterbegin','<div style=&quot;position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0c0a14;color:#f4ead5;font-family:serif;padding:40px;text-align:center;z-index:9999;&quot;>Could not load the 3d-force-graph library from any CDN. Check your network connection or ad-blocker, then refresh.</div>');};document.head.appendChild(s);"></script>
+</head>
+<body>
+
+  <script>
+    // Visible error overlay — surfaces messages that the browser would
+    // otherwise hide as "Script error." for cross-origin scripts. Now that
+    // our script tags carry crossorigin="anonymous", real messages come through.
+    (function() {
+      function showError(msg, src, line, col) {
+        var existing = document.getElementById('__err_overlay__');
+        if (existing) {
+          existing.querySelector('.__err_body__').textContent += '\n\n' + msg + (src ? ' (' + src + ':' + line + ':' + col + ')' : '');
+          return;
+        }
+        var div = document.createElement('div');
+        div.id = '__err_overlay__';
+        div.style.cssText = 'position:fixed;left:20px;right:20px;bottom:20px;max-height:50vh;overflow:auto;background:rgba(224,120,86,0.95);color:#0c0a14;font-family:ui-monospace,monospace;font-size:12px;padding:12px 16px;border-radius:3px;z-index:99999;box-shadow:0 20px 40px rgba(0,0,0,0.5);';
+        div.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;"><div><div style="font-weight:600;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:6px;">Runtime error</div><pre class="__err_body__" style="margin:0;white-space:pre-wrap;font-family:inherit;">' + msg + (src ? '\n(' + src + ':' + line + ':' + col + ')' : '') + '</pre></div><button style="background:transparent;border:1px solid rgba(12,10,20,0.4);color:#0c0a14;padding:2px 8px;cursor:pointer;font-family:inherit;font-size:11px;border-radius:2px;" onclick="this.closest(\'#__err_overlay__\').remove()">Dismiss</button></div>';
+        document.body.appendChild(div);
+      }
+      window.addEventListener('error', function(e) {
+        showError(e.message || String(e.error), e.filename, e.lineno, e.colno);
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        showError('Unhandled promise rejection: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+      });
+    })();
+  </script>
+
+  <div id="graph"></div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-eyebrow">EU-FarmBook · v5</div>
+      <h1 class="panel-title">Unified <em>Subcategories</em><br>Knowledge Map</h1>
+      <p class="panel-sub">Twenty-four unified categories, mapped to source subtypes across six modalities. Click any node to trace its connections.</p>
+    </div>
+    <div class="panel-body">
+      <div class="field">
+        <label class="field-label" for="search">Search</label>
+        <input id="search" placeholder="Category, subtype, modality…" autocomplete="off" />
+      </div>
+      <div class="row">
+        <div class="field">
+          <label class="field-label" for="modality">Modality</label>
+          <select id="modality"><option value="all">All</option></select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="strength">Strength</label>
+          <select id="strength">
+            <option value="all">All</option>
+            <option>Strong</option>
+            <option>Partial</option>
+            <option>Weak/Partial</option>
+          </select>
+        </div>
+      </div>
+      <button class="action" id="reset">Reset View</button>
+      <button class="action toggle" id="auto-rotate" data-on="false">Auto-rotate · Off</button>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-num" id="stat-cats"><em>24</em></div><div class="stat-lbl">Unified</div></div>
+        <div class="stat"><div class="stat-num" id="stat-srcs">51</div><div class="stat-lbl">Sources</div></div>
+        <div class="stat"><div class="stat-num" id="stat-maps">95</div><div class="stat-lbl">Mappings</div></div>
+      </div>
+
+      <div class="legend-block">
+        <div class="legend-title">Modality</div>
+        <div class="legend-grid">
+          <div class="item"><span class="dot" style="background:#f5b942"></span>Unified</div>
+          <div class="item"><span class="dot" style="background:#f4ead5"></span>Modality</div>
+          <div class="item"><span class="dot" style="background:#7da7d9"></span>Document</div>
+          <div class="item"><span class="dot" style="background:#b39ddb"></span>Video</div>
+          <div class="item"><span class="dot" style="background:#9bbf8a"></span>Audio</div>
+          <div class="item"><span class="dot" style="background:#e07856"></span>Image</div>
+          <div class="item"><span class="dot" style="background:#5fb3a3"></span>Dataset</div>
+          <div class="item"><span class="dot" style="background:#a594d1"></span>Software</div>
+        </div>
+        <div class="legend-strength">
+          <div class="item"><span class="stroke s-strong"></span>Strong</div>
+          <div class="item"><span class="stroke s-partial"></span>Partial</div>
+          <div class="item"><span class="stroke s-weak"></span>Weak</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="info" aria-hidden="true"></div>
+
+  <div class="watermark">A taxonomy of agricultural knowledge.</div>
+
+  <div class="hint">
+    <span><kbd>drag</kbd> rotate</span>
+    <span><kbd>right-drag</kbd> pan</span>
+    <span><kbd>scroll</kbd> zoom</span>
+    <span><kbd>click</kbd> focus</span>
+  </div>
+
+<script id="graph-data" type="application/json">{"nodes":[{"id":"Unified Subcategories","name":"Unified Subcategories","group":"Root","val":12},{"id":"Unified: How-To Guides","name":"How-To Guides","group":"Unified","val":8,"userLabel":"How to do something","definition":"Step-by-step content that helps users perform a task, apply a method, or follow a procedure.","scope":"Use when there is an ordered task flow with actions. Avoid when content only explains a concept or only shows context without procedural steps.","features":"Sequential structure; action verbs; ordered flow; tools/materials; task execution; procedural guidance."},{"id":"Modality: Document","name":"Document","group":"Modality","val":6},{"id":"Document: How-To / Instructional Documents","name":"How-To / Instructional Documents","group":"Document","val":3,"modality":"Document"},{"id":"Modality: Video","name":"Video","group":"Modality","val":6},{"id":"Video: How-to/procedure demonstration","name":"How-to/procedure demonstration","group":"Video","val":3,"modality":"Video"},{"id":"Modality: Audio","name":"Audio","group":"Modality","val":6},{"id":"Audio: How-to/procedure guide","name":"How-to/procedure guide","group":"Audio","val":3,"modality":"Audio"},{"id":"Video: Tool/machinery/software walkthrough","name":"Tool/machinery/software walkthrough","group":"Video","val":3,"modality":"Video"},{"id":"Modality: Software","name":"Software","group":"Modality","val":6},{"id":"Software: Training & Learning Applications","name":"Training & Learning Applications","group":"Software","val":3,"modality":"Software"},{"id":"Unified: Explainers","name":"Explainers","group":"Unified","val":8,"userLabel":"Understand a topic","definition":"Content that explains a concept, system, process, or idea in an accessible way.","scope":"Use when the purpose is understanding what/why. Avoid if the dominant intent is task execution or evidence-heavy research.","features":"Concept breakdown; examples; context; explanatory narration; structured conceptual sections."},{"id":"Document: Explanatory Documents","name":"Explanatory Documents","group":"Document","val":3,"modality":"Document"},{"id":"Video: Explainer/documentary","name":"Explainer/documentary","group":"Video","val":3,"modality":"Video"},{"id":"Audio: Expert commentary/explainer","name":"Expert commentary/explainer","group":"Audio","val":3,"modality":"Audio"},{"id":"Modality: Image","name":"Image","group":"Modality","val":6},{"id":"Image: Diagram/schematic","name":"Diagram/schematic","group":"Image","val":3,"modality":"Image"},{"id":"Image: Infographic","name":"Infographic","group":"Image","val":3,"modality":"Image"},{"id":"Unified: Technical & Research Content","name":"Technical & Research Content","group":"Unified","val":8,"userLabel":"Technical details","definition":"Detailed analytical, scientific, technical, or evidence-based content.","scope":"Use for formal technical depth, methods, evidence, metrics, references, or research findings. Avoid for simplified summaries.","features":"Formal structure; data-heavy sections; methods/results; references; technical terminology; analysis."},{"id":"Document: Technical & Scientific Documents","name":"Technical & Scientific Documents","group":"Document","val":3,"modality":"Document"},{"id":"Modality: Dataset","name":"Dataset","group":"Modality","val":6},{"id":"Dataset: Analytical/derived dataset (Analysis & Insights Data)","name":"Analytical/derived dataset (Analysis & Insights Data)","group":"Dataset","val":3,"modality":"Dataset"},{"id":"Software: Data Analysis & Dashboard Tools","name":"Data Analysis & Dashboard Tools","group":"Software","val":3,"modality":"Software"},{"id":"Image: Chart/graph","name":"Chart/graph","group":"Image","val":3,"modality":"Image"},{"id":"Unified: Case Studies & Practice Stories","name":"Case Studies & Practice Stories","group":"Unified","val":8,"userLabel":"Real-world example","definition":"Real-world examples showing implementation, results, outcomes, and lessons learned.","scope":"Use when there is a clear context-action-result or problem-solution-outcome structure.","features":"Narrative arc; real setting; implementation details; outcome; lessons learned; before/after comparison."},{"id":"Document: Case Study / Practice Documents","name":"Case Study / Practice Documents","group":"Document","val":3,"modality":"Document"},{"id":"Video: Case study","name":"Case study","group":"Video","val":3,"modality":"Video"},{"id":"Audio: Case study/practice story","name":"Case study/practice story","group":"Audio","val":3,"modality":"Audio"},{"id":"Image: Field/observational photograph","name":"Field/observational photograph","group":"Image","val":3,"modality":"Image"},{"id":"Unified: Project & Deliverable Reports","name":"Project & Deliverable Reports","group":"Unified","val":8,"userLabel":"Project results","definition":"Content reporting project progress, outputs, milestones, deliverables, or formal project results.","scope":"Use when tied to a project lifecycle, deliverable, milestone, or implementation report.","features":"Milestones; deliverables; progress updates; work packages; structured reporting; results."},{"id":"Document: Project Reports","name":"Project Reports","group":"Document","val":3,"modality":"Document"},{"id":"Document: Informational / Communication Documents","name":"Informational / Communication Documents","group":"Document","val":3,"modality":"Document"},{"id":"Unified: Policy & Governance Content","name":"Policy & Governance Content","group":"Unified","val":8,"userLabel":"Policies & rules","definition":"Content about policy, regulation, governance, compliance, recommendations, or formal rules.","scope":"Use for policy guidance or regulatory framing. Avoid for general advice without policy/governance content.","features":"Policy framing; legal/regulatory context; governance recommendations; compliance language; rules."},{"id":"Document: Policy & Regulatory Documents","name":"Policy & Regulatory Documents","group":"Document","val":3,"modality":"Document"},{"id":"Document: Summaries & Factsheets","name":"Summaries & Factsheets","group":"Document","val":3,"modality":"Document"},{"id":"Unified: Summaries, Factsheets & Outreach","name":"Summaries, Factsheets & Outreach","group":"Unified","val":8,"userLabel":"Quick summary","definition":"Condensed, awareness-oriented, or communication-oriented content for quick understanding.","scope":"Use for short summaries, brochures, flyers, newsletters, press releases, and communication material.","features":"Short format; bullet points; high information density; announcements; awareness language; broad audience."},{"id":"Video: Recorded presentation/webinar","name":"Recorded presentation/webinar","group":"Video","val":3,"modality":"Video"},{"id":"Unified: Templates & Reusable Formats","name":"Templates & Reusable Formats","group":"Unified","val":8,"userLabel":"Reusable format","definition":"Structured content intended to be reused, filled in, adapted, or applied repeatedly.","scope":"Use when the artefact is a reusable form, template, checklist, schema, or format rather than one-off information.","features":"Placeholders; predefined structure; repeatable use; reusable design; form-like structure."},{"id":"Document: Templates & Reusable Documents","name":"Templates & Reusable Documents","group":"Document","val":3,"modality":"Document"},{"id":"Dataset: Entity-focused dataset (Farm/Field Data)","name":"Entity-focused dataset (Farm/Field Data)","group":"Dataset","val":3,"modality":"Dataset"},{"id":"Software: Field Data Collection Apps","name":"Field Data Collection Apps","group":"Software","val":3,"modality":"Software"},{"id":"Unified: Field Demonstrations & Observational Content","name":"Field Demonstrations & Observational Content","group":"Unified","val":8,"userLabel":"See in practice","definition":"Content showing real-world conditions, practices, environments, or contexts without necessarily giving ordered instructions.","scope":"Use when the main value is observation or situated context. Avoid if it is primarily procedural; then use How-To Guides.","features":"In-situ context; real-world footage or photo; environmental setting; observational framing; practice visibility."},{"id":"Video: Field demonstration/walkthrough","name":"Field demonstration/walkthrough","group":"Video","val":3,"modality":"Video"},{"id":"Image: Aerial/remote-sensing image","name":"Aerial/remote-sensing image","group":"Image","val":3,"modality":"Image"},{"id":"Unified: Interviews & Practitioner Perspectives","name":"Interviews & Practitioner Perspectives","group":"Unified","val":8,"userLabel":"Hear experiences","definition":"Content centred on one individual\u2019s experience, viewpoint, testimony, or reflections.","scope":"Use for one main speaker/person. Avoid for multi-speaker discussions.","features":"One main speaker; personal perspective; interviewer prompts; first-person narrative; experiential tone."},{"id":"Video: Interview/practitioner perspective","name":"Interview/practitioner perspective","group":"Video","val":3,"modality":"Video"},{"id":"Audio: Interview/practitioner perspective","name":"Interview/practitioner perspective","group":"Audio","val":3,"modality":"Audio"},{"id":"Unified: Panel Discussions","name":"Panel Discussions","group":"Unified","val":8,"userLabel":"Different opinions","definition":"Multi-speaker discussions presenting different views, expertise, or perspectives.","scope":"Use when several participants contribute to a moderated or conversational exchange.","features":"Multiple speakers; moderation; exchange of views; contrasting opinions; conversational structure."},{"id":"Video: Panel discussion","name":"Panel discussion","group":"Video","val":3,"modality":"Video"},{"id":"Audio: Panel discussion","name":"Panel discussion","group":"Audio","val":3,"modality":"Audio"},{"id":"Unified: Q&A Sessions","name":"Q&A Sessions","group":"Unified","val":8,"userLabel":"Answers to questions","definition":"Content organised around explicit questions and answers.","scope":"Use when questions drive the structure. Avoid for general interviews unless there is a repeated Q&A format.","features":"Question-answer turns; problem-solving orientation; repeated Q&A pattern; audience/expert questions."},{"id":"Video: Expert Q&A session","name":"Expert Q&A session","group":"Video","val":3,"modality":"Video"},{"id":"Audio: Q&A","name":"Q&A","group":"Audio","val":3,"modality":"Audio"},{"id":"Unified: Talks, Lectures & Webinars","name":"Talks, Lectures & Webinars","group":"Unified","val":8,"userLabel":"Talks & webinars","definition":"Structured speaker-led presentations, seminars, lectures, or webinars.","scope":"Use when a presentation or lecture structure dominates, often with slides.","features":"Single-speaker or presenter-led flow; slide/screen-led delivery; seminar structure; limited interaction."},{"id":"Audio: Talk/lecture","name":"Talk/lecture","group":"Audio","val":3,"modality":"Audio"},{"id":"Unified: Tool, Machinery & Software Walkthroughs","name":"Tool, Machinery & Software Walkthroughs","group":"Unified","val":8,"userLabel":"How tools work","definition":"Content demonstrating how a tool, machine, interface, or system operates.","scope":"Use when the object/tool is central. If the main intent is an ordered task, How-To Guides may be the primary category.","features":"Interface focus; operational close-ups; equipment focus; navigation or operation; screen capture."},{"id":"Software: Farm Management System (FMIS)","name":"Farm Management System (FMIS)","group":"Software","val":3,"modality":"Software"},{"id":"Software: Mapping & GIS Tools","name":"Mapping & GIS Tools","group":"Software","val":3,"modality":"Software"},{"id":"Image: Equipment/infrastructure photograph","name":"Equipment/infrastructure photograph","group":"Image","val":3,"modality":"Image"},{"id":"Unified: Simulations, Forecasts & Model Visualisations","name":"Simulations, Forecasts & Model Visualisations","group":"Unified","val":8,"userLabel":"Simulate outcomes","definition":"Content or tools representing systems, future scenarios, or processes using models, simulation, forecasting, or animation.","scope":"Use when model-driven behaviour, prediction, scenario comparison, or simulated representation is central.","features":"Model-based representation; prediction; scenario logic; animation; forecasting; simulated outcomes."},{"id":"Video: Simulation/animation/model visualisation","name":"Simulation/animation/model visualisation","group":"Video","val":3,"modality":"Video"},{"id":"Software: Simulation & Forecasting Tools","name":"Simulation & Forecasting Tools","group":"Software","val":3,"modality":"Software"},{"id":"Unified: Charts & Data Visualisations","name":"Charts & Data Visualisations","group":"Unified","val":8,"userLabel":"View data trends","definition":"Visual representations of numeric or measured data using graphical encodings.","scope":"Use when values are encoded visually. Avoid maps, photos, and general diagrams.","features":"Axes; scales; legends; numeric values; trends; comparisons; plotted variables."},{"id":"Unified: Maps & Geospatial Content","name":"Maps & Geospatial Content","group":"Unified","val":8,"userLabel":"View maps","definition":"Spatial or geographic content where location, geometry, boundaries, or spatial relationships are primary.","scope":"Use for cartographic visuals, GIS layers, geospatial datasets, and mapping tools.","features":"Coordinates; geometry; boundaries; parcels; spatial patterns; georeferenced analysis; maps."},{"id":"Image: Map","name":"Map","group":"Image","val":3,"modality":"Image"},{"id":"Dataset: Geospatial dataset (Map-based or Geospatial Data)","name":"Geospatial dataset (Map-based or Geospatial Data)","group":"Dataset","val":3,"modality":"Dataset"},{"id":"Unified: Infographics & Visual Summaries","name":"Infographics & Visual Summaries","group":"Unified","val":8,"userLabel":"Visual summary","definition":"Composite visual summaries combining text, icons, graphics, and mini-visuals.","scope":"Use for multi-panel visual explanation or summary. Avoid single charts, photos, maps, or diagrams.","features":"Multi-panel layout; icons; text blocks; mini-visuals; visual storytelling; summarised guidance."},{"id":"Unified: Diagrams & Schematics","name":"Diagrams & Schematics","group":"Unified","val":8,"userLabel":"Understand structure","definition":"Non-photographic visual representations of structures, relationships, workflows, or processes.","scope":"Use for schematics, flow diagrams, annotated illustrations, and abstract process visuals.","features":"Schematic representation; labels; arrows; abstracted parts; process flow; relationships."},{"id":"Unified: Photographs & Field Images","name":"Photographs & Field Images","group":"Unified","val":8,"userLabel":"Field photos","definition":"Real-world photographic images showing context, equipment, conditions, or environments.","scope":"Use for contextual imagery. Use Diagnostic & Inspection Images if identification/diagnosis is the main purpose.","features":"Real-world capture; environmental context; visible practices; equipment or infrastructure; non-diagnostic framing."},{"id":"Unified: Diagnostic & Inspection Images","name":"Diagnostic & Inspection Images","group":"Unified","val":8,"userLabel":"Identify problems","definition":"Images focused on recognising symptoms, defects, damage, pests, diseases, or other identifiable conditions.","scope":"Use when recognition, diagnosis, or inspection is primary. Avoid general field photos.","features":"Close-up detail; high specificity; visible symptoms/damage; identification cues; inspection focus."},{"id":"Image: Diagnostic photograph","name":"Diagnostic photograph","group":"Image","val":3,"modality":"Image"},{"id":"Unified: Structured Domain Datasets","name":"Structured Domain Datasets","group":"Unified","val":8,"userLabel":"Download domain data","definition":"Structured datasets describing entities, activities, inputs, outputs, surveys, or derived information for analysis or reuse.","scope":"Use for downloadable or machine-readable data where the dataset itself is the knowledge object. More specific dataset-focused unified categories below may also apply.","features":"Records; variables; tabular/structured format; machine-readable; reusable; domain entities; survey or production records."},{"id":"Dataset: Event/operations dataset (Activity Records)","name":"Event/operations dataset (Activity Records)","group":"Dataset","val":3,"modality":"Dataset"},{"id":"Dataset: Input-use dataset (Input Use Data)","name":"Input-use dataset (Input Use Data)","group":"Dataset","val":3,"modality":"Dataset"},{"id":"Dataset: Output/production dataset (Production Data)","name":"Output/production dataset (Production Data)","group":"Dataset","val":3,"modality":"Dataset"},{"id":"Dataset: Survey/social dataset (Farmer & Survey Data)","name":"Survey/social dataset (Farmer & Survey Data)","group":"Dataset","val":3,"modality":"Dataset"},{"id":"Dataset: Time-series dataset (Weather & Time Data)","name":"Time-series dataset (Weather & Time Data)","group":"Dataset","val":3,"modality":"Dataset"},{"id":"Dataset: Machine/equipment dataset (Machinery & Sensor Data)","name":"Machine/equipment dataset (Machinery & Sensor Data)","group":"Dataset","val":3,"modality":"Dataset"},{"id":"Unified: Monitoring, Operations & Sensor Records","name":"Monitoring, Operations & Sensor Records","group":"Unified","val":8,"userLabel":"Track changes","definition":"Time-oriented records or tools used to monitor, log, track, or review changes, activities, telemetry, and operations over time.","scope":"Use where temporal tracking, repeated measurement, machinery logs, monitoring, or operational history is central.","features":"Time series; repeated measurements; event logs; telemetry; monitoring dashboards; historical records."},{"id":"Software: Monitoring & Recording Tools","name":"Monitoring & Recording Tools","group":"Software","val":3,"modality":"Software"},{"id":"Software: Automation & Control Systems","name":"Automation & Control Systems","group":"Software","val":3,"modality":"Software"},{"id":"Unified: Software Tools & Applications","name":"Software Tools & Applications","group":"Unified","val":8,"userLabel":"Use tools","definition":"Interactive software systems, applications, dashboards, control systems, or digital tools that perform workflows or support decisions.","scope":"Use when the uploaded knowledge object is a software application package, description, or non-executable software-related object accepted by the platform.","features":"Interactive system; interface; workflow; decision support; automation; interoperability; data capture; dashboards."}],"links":[{"source":"Unified Subcategories","target":"Unified: How-To Guides","type":"contains","strength":"Core","value":4},{"source":"Document: How-To / Instructional Documents","target":"Unified: How-To Guides","type":"mapped_to","strength":"Strong","rationale":"Same procedural intent and ordered steps.","value":3},{"source":"Modality: Document","target":"Document: How-To / Instructional Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: How-To Guides","type":"modality contributes","strength":"Context","value":0.45},{"source":"Video: How-to/procedure demonstration","target":"Unified: How-To Guides","type":"mapped_to","strength":"Strong","rationale":"Stepwise demonstration of a task.","value":3},{"source":"Modality: Video","target":"Video: How-to/procedure demonstration","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: How-To Guides","type":"modality contributes","strength":"Context","value":0.45},{"source":"Audio: How-to/procedure guide","target":"Unified: How-To Guides","type":"mapped_to","strength":"Strong","rationale":"Ordered procedural audio guidance.","value":3},{"source":"Modality: Audio","target":"Audio: How-to/procedure guide","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Audio","target":"Unified: How-To Guides","type":"modality contributes","strength":"Context","value":0.45},{"source":"Video: Tool/machinery/software walkthrough","target":"Unified: How-To Guides","type":"mapped_to","strength":"Partial","rationale":"Only when the walkthrough is instructional rather than merely descriptive.","value":1.7},{"source":"Modality: Video","target":"Video: Tool/machinery/software walkthrough","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: How-To Guides","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Training & Learning Applications","target":"Unified: How-To Guides","type":"mapped_to","strength":"Weak/Partial","rationale":"Only when the application teaches a procedure interactively.","value":1.1},{"source":"Modality: Software","target":"Software: Training & Learning Applications","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: How-To Guides","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Explainers","type":"contains","strength":"Core","value":4},{"source":"Document: Explanatory Documents","target":"Unified: Explainers","type":"mapped_to","strength":"Strong","rationale":"Direct conceptual explanation.","value":3},{"source":"Modality: Document","target":"Document: Explanatory Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Explainers","type":"modality contributes","strength":"Context","value":0.45},{"source":"Video: Explainer/documentary","target":"Unified: Explainers","type":"mapped_to","strength":"Strong","rationale":"Narrative explanation of a concept or system.","value":3},{"source":"Modality: Video","target":"Video: Explainer/documentary","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Explainers","type":"modality contributes","strength":"Context","value":0.45},{"source":"Audio: Expert commentary/explainer","target":"Unified: Explainers","type":"mapped_to","strength":"Strong","rationale":"Single-speaker explanation of a topic or method.","value":3},{"source":"Modality: Audio","target":"Audio: Expert commentary/explainer","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Audio","target":"Unified: Explainers","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Diagram/schematic","target":"Unified: Explainers","type":"mapped_to","strength":"Partial","rationale":"When used to explain a process or structure.","value":1.7},{"source":"Modality: Image","target":"Image: Diagram/schematic","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Explainers","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Infographic","target":"Unified: Explainers","type":"mapped_to","strength":"Partial","rationale":"When the infographic explains a topic rather than only summarising facts.","value":1.7},{"source":"Modality: Image","target":"Image: Infographic","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Explainers","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Technical & Research Content","type":"contains","strength":"Core","value":4},{"source":"Document: Technical & Scientific Documents","target":"Unified: Technical & Research Content","type":"mapped_to","strength":"Strong","rationale":"Direct match.","value":3},{"source":"Modality: Document","target":"Document: Technical & Scientific Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Technical & Research Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Analytical/derived dataset (Analysis & Insights Data)","target":"Unified: Technical & Research Content","type":"mapped_to","strength":"Partial","rationale":"Derived/analytical data supports technical insight but remains dataset material.","value":1.7},{"source":"Modality: Dataset","target":"Dataset: Analytical/derived dataset (Analysis & Insights Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Technical & Research Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Data Analysis & Dashboard Tools","target":"Unified: Technical & Research Content","type":"mapped_to","strength":"Partial","rationale":"Tools that generate or expose analytical insight.","value":1.7},{"source":"Modality: Software","target":"Software: Data Analysis & Dashboard Tools","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Technical & Research Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Chart/graph","target":"Unified: Technical & Research Content","type":"mapped_to","strength":"Partial","rationale":"Visual technical evidence, not a full technical content type by itself.","value":1.7},{"source":"Modality: Image","target":"Image: Chart/graph","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Technical & Research Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Case Studies & Practice Stories","type":"contains","strength":"Core","value":4},{"source":"Document: Case Study / Practice Documents","target":"Unified: Case Studies & Practice Stories","type":"mapped_to","strength":"Strong","rationale":"Direct match.","value":3},{"source":"Modality: Document","target":"Document: Case Study / Practice Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Case Studies & Practice Stories","type":"modality contributes","strength":"Context","value":0.45},{"source":"Video: Case study","target":"Unified: Case Studies & Practice Stories","type":"mapped_to","strength":"Strong","rationale":"Explicit problem-solution arc.","value":3},{"source":"Modality: Video","target":"Video: Case study","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Case Studies & Practice Stories","type":"modality contributes","strength":"Context","value":0.45},{"source":"Audio: Case study/practice story","target":"Unified: Case Studies & Practice Stories","type":"mapped_to","strength":"Strong","rationale":"Real-world narrative with outcomes.","value":3},{"source":"Modality: Audio","target":"Audio: Case study/practice story","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Audio","target":"Unified: Case Studies & Practice Stories","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Field/observational photograph","target":"Unified: Case Studies & Practice Stories","type":"mapped_to","strength":"Weak/Partial","rationale":"Only if used as supporting evidence for a case story.","value":1.1},{"source":"Modality: Image","target":"Image: Field/observational photograph","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Case Studies & Practice Stories","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Project & Deliverable Reports","type":"contains","strength":"Core","value":4},{"source":"Document: Project Reports","target":"Unified: Project & Deliverable Reports","type":"mapped_to","strength":"Strong","rationale":"Direct project-lifecycle reporting.","value":3},{"source":"Modality: Document","target":"Document: Project Reports","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Project & Deliverable Reports","type":"modality contributes","strength":"Context","value":0.45},{"source":"Document: Technical & Scientific Documents","target":"Unified: Project & Deliverable Reports","type":"mapped_to","strength":"Partial","rationale":"Only when the technical document is also a project deliverable.","value":1.7},{"source":"Modality: Document","target":"Document: Technical & Scientific Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Project & Deliverable Reports","type":"modality contributes","strength":"Context","value":0.45},{"source":"Document: Informational / Communication Documents","target":"Unified: Project & Deliverable Reports","type":"mapped_to","strength":"Weak/Partial","rationale":"Only for project announcements or progress updates.","value":1.1},{"source":"Modality: Document","target":"Document: Informational / Communication Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Project & Deliverable Reports","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Policy & Governance Content","type":"contains","strength":"Core","value":4},{"source":"Document: Policy & Regulatory Documents","target":"Unified: Policy & Governance Content","type":"mapped_to","strength":"Strong","rationale":"Direct match.","value":3},{"source":"Modality: Document","target":"Document: Policy & Regulatory Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Policy & Governance Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Document: Summaries & Factsheets","target":"Unified: Policy & Governance Content","type":"mapped_to","strength":"Partial","rationale":"Only when summarising policy or regulatory guidance.","value":1.7},{"source":"Modality: Document","target":"Document: Summaries & Factsheets","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Policy & Governance Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Document: Informational / Communication Documents","target":"Unified: Policy & Governance Content","type":"mapped_to","strength":"Weak/Partial","rationale":"Only for policy announcements or outreach.","value":1.1},{"source":"Modality: Document","target":"Document: Informational / Communication Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Policy & Governance Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Summaries, Factsheets & Outreach","type":"contains","strength":"Core","value":4},{"source":"Document: Summaries & Factsheets","target":"Unified: Summaries, Factsheets & Outreach","type":"mapped_to","strength":"Strong","rationale":"Direct short-format informational material.","value":3},{"source":"Modality: Document","target":"Document: Summaries & Factsheets","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Summaries, Factsheets & Outreach","type":"modality contributes","strength":"Context","value":0.45},{"source":"Document: Informational / Communication Documents","target":"Unified: Summaries, Factsheets & Outreach","type":"mapped_to","strength":"Strong","rationale":"Awareness, outreach, and announcements.","value":3},{"source":"Modality: Document","target":"Document: Informational / Communication Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Summaries, Factsheets & Outreach","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Infographic","target":"Unified: Summaries, Factsheets & Outreach","type":"mapped_to","strength":"Partial","rationale":"Visual summary format.","value":1.7},{"source":"Modality: Image","target":"Image: Infographic","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Summaries, Factsheets & Outreach","type":"modality contributes","strength":"Context","value":0.45},{"source":"Video: Recorded presentation/webinar","target":"Unified: Summaries, Factsheets & Outreach","type":"mapped_to","strength":"Weak/Partial","rationale":"Only if edited as a short awareness summary, not a full lecture.","value":1.1},{"source":"Modality: Video","target":"Video: Recorded presentation/webinar","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Summaries, Factsheets & Outreach","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Templates & Reusable Formats","type":"contains","strength":"Core","value":4},{"source":"Document: Templates & Reusable Documents","target":"Unified: Templates & Reusable Formats","type":"mapped_to","strength":"Strong","rationale":"Direct match.","value":3},{"source":"Modality: Document","target":"Document: Templates & Reusable Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Templates & Reusable Formats","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Entity-focused dataset (Farm/Field Data)","target":"Unified: Templates & Reusable Formats","type":"mapped_to","strength":"Weak/Partial","rationale":"Only if distributed as a reusable data-entry structure/schema.","value":1.1},{"source":"Modality: Dataset","target":"Dataset: Entity-focused dataset (Farm/Field Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Templates & Reusable Formats","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Field Data Collection Apps","target":"Unified: Templates & Reusable Formats","type":"mapped_to","strength":"Weak/Partial","rationale":"Only when the app primarily provides reusable forms/templates.","value":1.1},{"source":"Modality: Software","target":"Software: Field Data Collection Apps","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Templates & Reusable Formats","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Field Demonstrations & Observational Content","type":"contains","strength":"Core","value":4},{"source":"Video: Field demonstration/walkthrough","target":"Unified: Field Demonstrations & Observational Content","type":"mapped_to","strength":"Strong","rationale":"Direct situated field observation.","value":3},{"source":"Modality: Video","target":"Video: Field demonstration/walkthrough","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Field Demonstrations & Observational Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Field/observational photograph","target":"Unified: Field Demonstrations & Observational Content","type":"mapped_to","strength":"Strong","rationale":"Direct real-world contextual imagery.","value":3},{"source":"Modality: Image","target":"Image: Field/observational photograph","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Field Demonstrations & Observational Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Aerial/remote-sensing image","target":"Unified: Field Demonstrations & Observational Content","type":"mapped_to","strength":"Partial","rationale":"Observational land/surface context from above.","value":1.7},{"source":"Modality: Image","target":"Image: Aerial/remote-sensing image","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Field Demonstrations & Observational Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Document: Case Study / Practice Documents","target":"Unified: Field Demonstrations & Observational Content","type":"mapped_to","strength":"Weak/Partial","rationale":"Only when the document mostly documents observed practice rather than a case arc.","value":1.1},{"source":"Modality: Document","target":"Document: Case Study / Practice Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Field Demonstrations & Observational Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Interviews & Practitioner Perspectives","type":"contains","strength":"Core","value":4},{"source":"Video: Interview/practitioner perspective","target":"Unified: Interviews & Practitioner Perspectives","type":"mapped_to","strength":"Strong","rationale":"Direct video interview/testimony.","value":3},{"source":"Modality: Video","target":"Video: Interview/practitioner perspective","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Interviews & Practitioner Perspectives","type":"modality contributes","strength":"Context","value":0.45},{"source":"Audio: Interview/practitioner perspective","target":"Unified: Interviews & Practitioner Perspectives","type":"mapped_to","strength":"Strong","rationale":"Direct audio interview/testimony.","value":3},{"source":"Modality: Audio","target":"Audio: Interview/practitioner perspective","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Audio","target":"Unified: Interviews & Practitioner Perspectives","type":"modality contributes","strength":"Context","value":0.45},{"source":"Document: Case Study / Practice Documents","target":"Unified: Interviews & Practitioner Perspectives","type":"mapped_to","strength":"Weak/Partial","rationale":"Only if based primarily on an individual practitioner narrative.","value":1.1},{"source":"Modality: Document","target":"Document: Case Study / Practice Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Interviews & Practitioner Perspectives","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Panel Discussions","type":"contains","strength":"Core","value":4},{"source":"Video: Panel discussion","target":"Unified: Panel Discussions","type":"mapped_to","strength":"Strong","rationale":"Direct multi-speaker video discussion.","value":3},{"source":"Modality: Video","target":"Video: Panel discussion","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Panel Discussions","type":"modality contributes","strength":"Context","value":0.45},{"source":"Audio: Panel discussion","target":"Unified: Panel Discussions","type":"mapped_to","strength":"Strong","rationale":"Direct multi-speaker audio discussion.","value":3},{"source":"Modality: Audio","target":"Audio: Panel discussion","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Audio","target":"Unified: Panel Discussions","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Q&A Sessions","type":"contains","strength":"Core","value":4},{"source":"Video: Expert Q&A session","target":"Unified: Q&A Sessions","type":"mapped_to","strength":"Strong","rationale":"Direct question-led video.","value":3},{"source":"Modality: Video","target":"Video: Expert Q&A session","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Q&A Sessions","type":"modality contributes","strength":"Context","value":0.45},{"source":"Audio: Q&A","target":"Unified: Q&A Sessions","type":"mapped_to","strength":"Strong","rationale":"Direct question-led audio.","value":3},{"source":"Modality: Audio","target":"Audio: Q&A","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Audio","target":"Unified: Q&A Sessions","type":"modality contributes","strength":"Context","value":0.45},{"source":"Video: Interview/practitioner perspective","target":"Unified: Q&A Sessions","type":"mapped_to","strength":"Weak/Partial","rationale":"Only if formatted as explicit repeated Q&A.","value":1.1},{"source":"Modality: Video","target":"Video: Interview/practitioner perspective","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Q&A Sessions","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Talks, Lectures & Webinars","type":"contains","strength":"Core","value":4},{"source":"Video: Recorded presentation/webinar","target":"Unified: Talks, Lectures & Webinars","type":"mapped_to","strength":"Strong","rationale":"Direct slide-driven or lecture-style video.","value":3},{"source":"Modality: Video","target":"Video: Recorded presentation/webinar","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Talks, Lectures & Webinars","type":"modality contributes","strength":"Context","value":0.45},{"source":"Audio: Talk/lecture","target":"Unified: Talks, Lectures & Webinars","type":"mapped_to","strength":"Strong","rationale":"Direct lecture-style audio.","value":3},{"source":"Modality: Audio","target":"Audio: Talk/lecture","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Audio","target":"Unified: Talks, Lectures & Webinars","type":"modality contributes","strength":"Context","value":0.45},{"source":"Document: Technical & Scientific Documents","target":"Unified: Talks, Lectures & Webinars","type":"mapped_to","strength":"Weak/Partial","rationale":"Only if the document is a presentation transcript or seminar paper.","value":1.1},{"source":"Modality: Document","target":"Document: Technical & Scientific Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Talks, Lectures & Webinars","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Tool, Machinery & Software Walkthroughs","type":"contains","strength":"Core","value":4},{"source":"Video: Tool/machinery/software walkthrough","target":"Unified: Tool, Machinery & Software Walkthroughs","type":"mapped_to","strength":"Strong","rationale":"Direct tool/system walkthrough.","value":3},{"source":"Modality: Video","target":"Video: Tool/machinery/software walkthrough","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Tool, Machinery & Software Walkthroughs","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Farm Management System (FMIS)","target":"Unified: Tool, Machinery & Software Walkthroughs","type":"mapped_to","strength":"Partial","rationale":"Software system category; not explanatory content unless presented as a walkthrough.","value":1.7},{"source":"Modality: Software","target":"Software: Farm Management System (FMIS)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Tool, Machinery & Software Walkthroughs","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Mapping & GIS Tools","target":"Unified: Tool, Machinery & Software Walkthroughs","type":"mapped_to","strength":"Partial","rationale":"Tool type; may need walkthrough content for this category.","value":1.7},{"source":"Modality: Software","target":"Software: Mapping & GIS Tools","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Tool, Machinery & Software Walkthroughs","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Equipment/infrastructure photograph","target":"Unified: Tool, Machinery & Software Walkthroughs","type":"mapped_to","strength":"Partial","rationale":"Shows the tool/equipment but may not explain operation.","value":1.7},{"source":"Modality: Image","target":"Image: Equipment/infrastructure photograph","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Tool, Machinery & Software Walkthroughs","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Simulations, Forecasts & Model Visualisations","type":"contains","strength":"Core","value":4},{"source":"Video: Simulation/animation/model visualisation","target":"Unified: Simulations, Forecasts & Model Visualisations","type":"mapped_to","strength":"Strong","rationale":"Direct simulation/model visualisation.","value":3},{"source":"Modality: Video","target":"Video: Simulation/animation/model visualisation","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Simulations, Forecasts & Model Visualisations","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Simulation & Forecasting Tools","target":"Unified: Simulations, Forecasts & Model Visualisations","type":"mapped_to","strength":"Strong","rationale":"Direct model/prediction software.","value":3},{"source":"Modality: Software","target":"Software: Simulation & Forecasting Tools","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Simulations, Forecasts & Model Visualisations","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Analytical/derived dataset (Analysis & Insights Data)","target":"Unified: Simulations, Forecasts & Model Visualisations","type":"mapped_to","strength":"Partial","rationale":"May contain model outputs or derived simulation results.","value":1.7},{"source":"Modality: Dataset","target":"Dataset: Analytical/derived dataset (Analysis & Insights Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Simulations, Forecasts & Model Visualisations","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Diagram/schematic","target":"Unified: Simulations, Forecasts & Model Visualisations","type":"mapped_to","strength":"Weak/Partial","rationale":"Only if representing model logic or simulated process.","value":1.1},{"source":"Modality: Image","target":"Image: Diagram/schematic","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Simulations, Forecasts & Model Visualisations","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Charts & Data Visualisations","type":"contains","strength":"Core","value":4},{"source":"Image: Chart/graph","target":"Unified: Charts & Data Visualisations","type":"mapped_to","strength":"Strong","rationale":"Direct visual quantitative encoding.","value":3},{"source":"Modality: Image","target":"Image: Chart/graph","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Charts & Data Visualisations","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Data Analysis & Dashboard Tools","target":"Unified: Charts & Data Visualisations","type":"mapped_to","strength":"Partial","rationale":"Software producing charts/dashboards.","value":1.7},{"source":"Modality: Software","target":"Software: Data Analysis & Dashboard Tools","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Charts & Data Visualisations","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Analytical/derived dataset (Analysis & Insights Data)","target":"Unified: Charts & Data Visualisations","type":"mapped_to","strength":"Weak/Partial","rationale":"Data source behind visualisations, not itself a chart.","value":1.1},{"source":"Modality: Dataset","target":"Dataset: Analytical/derived dataset (Analysis & Insights Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Charts & Data Visualisations","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Maps & Geospatial Content","type":"contains","strength":"Core","value":4},{"source":"Image: Map","target":"Unified: Maps & Geospatial Content","type":"mapped_to","strength":"Strong","rationale":"Direct geographic visual.","value":3},{"source":"Modality: Image","target":"Image: Map","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Maps & Geospatial Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Geospatial dataset (Map-based or Geospatial Data)","target":"Unified: Maps & Geospatial Content","type":"mapped_to","strength":"Strong","rationale":"Spatial/geometric dataset.","value":3},{"source":"Modality: Dataset","target":"Dataset: Geospatial dataset (Map-based or Geospatial Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Maps & Geospatial Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Mapping & GIS Tools","target":"Unified: Maps & Geospatial Content","type":"mapped_to","strength":"Strong","rationale":"Spatial software tools.","value":3},{"source":"Modality: Software","target":"Software: Mapping & GIS Tools","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Maps & Geospatial Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Aerial/remote-sensing image","target":"Unified: Maps & Geospatial Content","type":"mapped_to","strength":"Partial","rationale":"Spatial surface imagery, not necessarily a map.","value":1.7},{"source":"Modality: Image","target":"Image: Aerial/remote-sensing image","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Maps & Geospatial Content","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Infographics & Visual Summaries","type":"contains","strength":"Core","value":4},{"source":"Image: Infographic","target":"Unified: Infographics & Visual Summaries","type":"mapped_to","strength":"Strong","rationale":"Direct visual summary.","value":3},{"source":"Modality: Image","target":"Image: Infographic","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Infographics & Visual Summaries","type":"modality contributes","strength":"Context","value":0.45},{"source":"Document: Summaries & Factsheets","target":"Unified: Infographics & Visual Summaries","type":"mapped_to","strength":"Partial","rationale":"Similar summary intent, but document format.","value":1.7},{"source":"Modality: Document","target":"Document: Summaries & Factsheets","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Infographics & Visual Summaries","type":"modality contributes","strength":"Context","value":0.45},{"source":"Document: Informational / Communication Documents","target":"Unified: Infographics & Visual Summaries","type":"mapped_to","strength":"Partial","rationale":"Awareness/outreach material may contain infographic-like content.","value":1.7},{"source":"Modality: Document","target":"Document: Informational / Communication Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Infographics & Visual Summaries","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Diagrams & Schematics","type":"contains","strength":"Core","value":4},{"source":"Image: Diagram/schematic","target":"Unified: Diagrams & Schematics","type":"mapped_to","strength":"Strong","rationale":"Direct schematic/process visual.","value":3},{"source":"Modality: Image","target":"Image: Diagram/schematic","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Diagrams & Schematics","type":"modality contributes","strength":"Context","value":0.45},{"source":"Document: Explanatory Documents","target":"Unified: Diagrams & Schematics","type":"mapped_to","strength":"Weak/Partial","rationale":"Only where the document\u2019s main object is an embedded diagram/schematic.","value":1.1},{"source":"Modality: Document","target":"Document: Explanatory Documents","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Document","target":"Unified: Diagrams & Schematics","type":"modality contributes","strength":"Context","value":0.45},{"source":"Video: Simulation/animation/model visualisation","target":"Unified: Diagrams & Schematics","type":"mapped_to","strength":"Weak/Partial","rationale":"Only if the video uses schematic animation as the dominant representation.","value":1.1},{"source":"Modality: Video","target":"Video: Simulation/animation/model visualisation","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Video","target":"Unified: Diagrams & Schematics","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Photographs & Field Images","type":"contains","strength":"Core","value":4},{"source":"Image: Field/observational photograph","target":"Unified: Photographs & Field Images","type":"mapped_to","strength":"Strong","rationale":"Direct field/context image.","value":3},{"source":"Modality: Image","target":"Image: Field/observational photograph","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Photographs & Field Images","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Equipment/infrastructure photograph","target":"Unified: Photographs & Field Images","type":"mapped_to","strength":"Strong","rationale":"Direct equipment/infrastructure photo.","value":3},{"source":"Modality: Image","target":"Image: Equipment/infrastructure photograph","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Photographs & Field Images","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Aerial/remote-sensing image","target":"Unified: Photographs & Field Images","type":"mapped_to","strength":"Partial","rationale":"Photographic/sensor-derived field view from above.","value":1.7},{"source":"Modality: Image","target":"Image: Aerial/remote-sensing image","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Photographs & Field Images","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Diagnostic & Inspection Images","type":"contains","strength":"Core","value":4},{"source":"Image: Diagnostic photograph","target":"Unified: Diagnostic & Inspection Images","type":"mapped_to","strength":"Strong","rationale":"Direct diagnostic/inspection photo.","value":3},{"source":"Modality: Image","target":"Image: Diagnostic photograph","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Diagnostic & Inspection Images","type":"modality contributes","strength":"Context","value":0.45},{"source":"Image: Aerial/remote-sensing image","target":"Unified: Diagnostic & Inspection Images","type":"mapped_to","strength":"Partial","rationale":"Only where the sensor image is used for detecting field problems.","value":1.7},{"source":"Modality: Image","target":"Image: Aerial/remote-sensing image","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Image","target":"Unified: Diagnostic & Inspection Images","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Field Data Collection Apps","target":"Unified: Diagnostic & Inspection Images","type":"mapped_to","strength":"Weak/Partial","rationale":"Only if the app is used for scouting/inspection capture.","value":1.1},{"source":"Modality: Software","target":"Software: Field Data Collection Apps","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Diagnostic & Inspection Images","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Structured Domain Datasets","type":"contains","strength":"Core","value":4},{"source":"Dataset: Entity-focused dataset (Farm/Field Data)","target":"Unified: Structured Domain Datasets","type":"mapped_to","strength":"Strong","rationale":"Entity-centred records.","value":3},{"source":"Modality: Dataset","target":"Dataset: Entity-focused dataset (Farm/Field Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Structured Domain Datasets","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Event/operations dataset (Activity Records)","target":"Unified: Structured Domain Datasets","type":"mapped_to","strength":"Strong","rationale":"Activity or workflow records.","value":3},{"source":"Modality: Dataset","target":"Dataset: Event/operations dataset (Activity Records)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Structured Domain Datasets","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Input-use dataset (Input Use Data)","target":"Unified: Structured Domain Datasets","type":"mapped_to","strength":"Strong","rationale":"Input application records.","value":3},{"source":"Modality: Dataset","target":"Dataset: Input-use dataset (Input Use Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Structured Domain Datasets","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Output/production dataset (Production Data)","target":"Unified: Structured Domain Datasets","type":"mapped_to","strength":"Strong","rationale":"Production/yield records.","value":3},{"source":"Modality: Dataset","target":"Dataset: Output/production dataset (Production Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Structured Domain Datasets","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Survey/social dataset (Farmer & Survey Data)","target":"Unified: Structured Domain Datasets","type":"mapped_to","strength":"Strong","rationale":"Survey/demographic records.","value":3},{"source":"Modality: Dataset","target":"Dataset: Survey/social dataset (Farmer & Survey Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Structured Domain Datasets","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Analytical/derived dataset (Analysis & Insights Data)","target":"Unified: Structured Domain Datasets","type":"mapped_to","strength":"Strong","rationale":"Processed/derived data.","value":3},{"source":"Modality: Dataset","target":"Dataset: Analytical/derived dataset (Analysis & Insights Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Structured Domain Datasets","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Time-series dataset (Weather & Time Data)","target":"Unified: Structured Domain Datasets","type":"mapped_to","strength":"Partial","rationale":"Also maps strongly to Monitoring & Sensor Records.","value":1.7},{"source":"Modality: Dataset","target":"Dataset: Time-series dataset (Weather & Time Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Structured Domain Datasets","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Machine/equipment dataset (Machinery & Sensor Data)","target":"Unified: Structured Domain Datasets","type":"mapped_to","strength":"Partial","rationale":"Also maps strongly to Monitoring & Sensor Records.","value":1.7},{"source":"Modality: Dataset","target":"Dataset: Machine/equipment dataset (Machinery & Sensor Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Structured Domain Datasets","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Geospatial dataset (Map-based or Geospatial Data)","target":"Unified: Structured Domain Datasets","type":"mapped_to","strength":"Partial","rationale":"Also maps strongly to Maps & Geospatial Content.","value":1.7},{"source":"Modality: Dataset","target":"Dataset: Geospatial dataset (Map-based or Geospatial Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Structured Domain Datasets","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Monitoring, Operations & Sensor Records","type":"contains","strength":"Core","value":4},{"source":"Dataset: Time-series dataset (Weather & Time Data)","target":"Unified: Monitoring, Operations & Sensor Records","type":"mapped_to","strength":"Strong","rationale":"Time-indexed records.","value":3},{"source":"Modality: Dataset","target":"Dataset: Time-series dataset (Weather & Time Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Monitoring, Operations & Sensor Records","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Machine/equipment dataset (Machinery & Sensor Data)","target":"Unified: Monitoring, Operations & Sensor Records","type":"mapped_to","strength":"Strong","rationale":"Equipment logs and telemetry.","value":3},{"source":"Modality: Dataset","target":"Dataset: Machine/equipment dataset (Machinery & Sensor Data)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Monitoring, Operations & Sensor Records","type":"modality contributes","strength":"Context","value":0.45},{"source":"Dataset: Event/operations dataset (Activity Records)","target":"Unified: Monitoring, Operations & Sensor Records","type":"mapped_to","strength":"Strong","rationale":"Logged actions or operations over time.","value":3},{"source":"Modality: Dataset","target":"Dataset: Event/operations dataset (Activity Records)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Dataset","target":"Unified: Monitoring, Operations & Sensor Records","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Monitoring & Recording Tools","target":"Unified: Monitoring, Operations & Sensor Records","type":"mapped_to","strength":"Strong","rationale":"Software for tracking/logging/reviewing over time.","value":3},{"source":"Modality: Software","target":"Software: Monitoring & Recording Tools","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Monitoring, Operations & Sensor Records","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Automation & Control Systems","target":"Unified: Monitoring, Operations & Sensor Records","type":"mapped_to","strength":"Partial","rationale":"Often uses monitoring/trigger data but main purpose is control.","value":1.7},{"source":"Modality: Software","target":"Software: Automation & Control Systems","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Monitoring, Operations & Sensor Records","type":"modality contributes","strength":"Context","value":0.45},{"source":"Unified Subcategories","target":"Unified: Software Tools & Applications","type":"contains","strength":"Core","value":4},{"source":"Software: Farm Management System (FMIS)","target":"Unified: Software Tools & Applications","type":"mapped_to","strength":"Strong","rationale":"Integrated farm management platform.","value":3},{"source":"Modality: Software","target":"Software: Farm Management System (FMIS)","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Software Tools & Applications","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Monitoring & Recording Tools","target":"Unified: Software Tools & Applications","type":"mapped_to","strength":"Strong","rationale":"Monitoring/logging software.","value":3},{"source":"Modality: Software","target":"Software: Monitoring & Recording Tools","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Software Tools & Applications","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Field Data Collection Apps","target":"Unified: Software Tools & Applications","type":"mapped_to","strength":"Strong","rationale":"Field capture software.","value":3},{"source":"Modality: Software","target":"Software: Field Data Collection Apps","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Software Tools & Applications","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Mapping & GIS Tools","target":"Unified: Software Tools & Applications","type":"mapped_to","strength":"Strong","rationale":"Spatial/GIS software.","value":3},{"source":"Modality: Software","target":"Software: Mapping & GIS Tools","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Software Tools & Applications","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Data Analysis & Dashboard Tools","target":"Unified: Software Tools & Applications","type":"mapped_to","strength":"Strong","rationale":"Analytics/dashboard software.","value":3},{"source":"Modality: Software","target":"Software: Data Analysis & Dashboard Tools","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Software Tools & Applications","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Simulation & Forecasting Tools","target":"Unified: Software Tools & Applications","type":"mapped_to","strength":"Strong","rationale":"Simulation/forecasting software.","value":3},{"source":"Modality: Software","target":"Software: Simulation & Forecasting Tools","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Software Tools & Applications","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Automation & Control Systems","target":"Unified: Software Tools & Applications","type":"mapped_to","strength":"Strong","rationale":"Control/automation software.","value":3},{"source":"Modality: Software","target":"Software: Automation & Control Systems","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Software Tools & Applications","type":"modality contributes","strength":"Context","value":0.45},{"source":"Software: Training & Learning Applications","target":"Unified: Software Tools & Applications","type":"mapped_to","strength":"Strong","rationale":"Learning/training software.","value":3},{"source":"Modality: Software","target":"Software: Training & Learning Applications","type":"has subtype","strength":"Source","value":0.8},{"source":"Modality: Software","target":"Unified: Software Tools & Applications","type":"modality contributes","strength":"Context","value":0.45}]}</script>
+
+<script>
+function bootWhenReady(start) {
+  if (typeof ForceGraph3D !== 'undefined' &&
+      typeof THREE !== 'undefined' &&
+      typeof SpriteText !== 'undefined') return start();
+  let waited = 0;
+  const id = setInterval(() => {
+    if (typeof ForceGraph3D !== 'undefined' &&
+        typeof THREE !== 'undefined' &&
+        typeof SpriteText !== 'undefined') {
+      clearInterval(id);
+      start();
+    } else if ((waited += 100) > 12000) {
+      clearInterval(id);
+      document.body.insertAdjacentHTML('afterbegin',
+        '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0c0a14;color:#f4ead5;font-family:serif;padding:40px;text-align:center;z-index:9999;">' +
+        'Could not load the 3D libraries (Three.js / 3d-force-graph). Check your network connection or ad-blocker, then refresh.' +
+        '</div>');
+    }
+  }, 100);
+}
+
+bootWhenReady(function() {
+  // ============================================================
+  //   Configuration
+  // ============================================================
+  const COLOURS = {
+    Root:     '#0c0a14',
+    Unified:  '#f5b942',
+    Modality: '#f4ead5',
+    Document: '#7da7d9',
+    Video:    '#b39ddb',
+    Audio:    '#9bbf8a',
+    Image:    '#e07856',
+    Dataset:  '#5fb3a3',
+    Software: '#a594d1'
+  };
+
+  const STRENGTH_COLOUR = {
+    'Strong':       'rgba(245, 185, 66, 0.9)',
+    'Partial':      'rgba(179, 157, 219, 0.75)',
+    'Weak/Partial': 'rgba(138, 132, 153, 0.55)',
+    'Core':         'rgba(244, 234, 213, 0.45)',
+    'Source':       'rgba(244, 234, 213, 0.22)',
+    'Context':      'rgba(244, 234, 213, 0.10)'
+  };
+
+  const STRENGTH_WIDTH = {
+    'Strong':       0.9,
+    'Partial':      0.55,
+    'Weak/Partial': 0.35,
+    'Core':         0.7,
+    'Source':       0.3,
+    'Context':      0.2
+  };
+
+  const NODE_RADIUS = {
+    Root:     14,
+    Unified:  8,
+    Modality: 11,
+    Document: 5,
+    Video:    5,
+    Audio:    5,
+    Image:    5,
+    Dataset:  5,
+    Software: 5
+  };
+
+  // ============================================================
+  //   Load data
+  // ============================================================
+  const fullData = JSON.parse(document.getElementById('graph-data').textContent);
+  fullData.nodes.forEach(n => { n.color = COLOURS[n.group] || '#94a3b8'; });
+
+  const nodeById = new Map(fullData.nodes.map(n => [n.id, n]));
+  const neighbours = new Map(fullData.nodes.map(n => [n.id, new Set()]));
+  const linksByNode = new Map(fullData.nodes.map(n => [n.id, []]));
+  fullData.links.forEach(l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    neighbours.get(s).add(t);
+    neighbours.get(t).add(s);
+    linksByNode.get(s).push(l);
+    linksByNode.get(t).push(l);
+  });
+
+  // ============================================================
+  //   State + material registry (so we can dim/brighten on hover)
+  // ============================================================
+  let highlightNodes = new Set();
+  let highlightLinks = new Set();
+  let focusedNode = null;
+  let hoverNode = null;
+
+  // node.id → { mats: [Material…], baseOpacity: [number…] }
+  // Stored so hover/click handlers can mutate opacity without rebuilding geometry.
+  const nodeMaterials = new Map();
+
+  function registerMaterial(nodeId, mat, baseOpacity) {
+    let entry = nodeMaterials.get(nodeId);
+    if (!entry) { entry = { mats: [], base: [] }; nodeMaterials.set(nodeId, entry); }
+    entry.mats.push(mat);
+    entry.base.push(baseOpacity);
+  }
+
+  // ============================================================
+  //   Build a Three.js object for each node
+  //   - Sphere with emissive material (always)
+  //   - Halo aura sphere (Unified + Modality + Root)
+  //   - Twin torus rings (Unified — the "minted coin" effect, in 3D)
+  //   - SpriteText label (Root + Modality + Unified)
+  // ============================================================
+  function buildNodeObject(node) {
+    const group = new THREE.Group();
+    group.userData.nodeId = node.id;
+
+    const r = NODE_RADIUS[node.group] || 4;
+    const colourHex = COLOURS[node.group] || '#94a3b8';
+    const colour = new THREE.Color(colourHex);
+
+    // Main sphere
+    const sphereGeom = new THREE.SphereGeometry(r, 28, 20);
+    const emissiveIntensity =
+      node.group === 'Unified' ? 0.7 :
+      node.group === 'Modality' ? 0.45 :
+      node.group === 'Root' ? 0.2 : 0.5;
+    const sphereMat = new THREE.MeshLambertMaterial({
+      color: colour,
+      emissive: colour,
+      emissiveIntensity: emissiveIntensity,
+      transparent: true,
+      opacity: 1
+    });
+    group.add(new THREE.Mesh(sphereGeom, sphereMat));
+    registerMaterial(node.id, sphereMat, 1);
+
+    // Soft halo for important nodes
+    if (node.group === 'Unified' || node.group === 'Modality' || node.group === 'Root') {
+      const haloGeom = new THREE.SphereGeometry(r * 1.9, 20, 14);
+      const haloMat = new THREE.MeshBasicMaterial({
+        color: colour,
+        transparent: true,
+        opacity: 0.10,
+        depthWrite: false
+      });
+      group.add(new THREE.Mesh(haloGeom, haloMat));
+      registerMaterial(node.id, haloMat, 0.10);
+    }
+
+    // Two crossed rings around Unified — the "minted coin" in 3D
+    if (node.group === 'Unified') {
+      const torusGeom = new THREE.TorusGeometry(r * 1.55, 0.35, 8, 40);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xf5b942,
+        transparent: true,
+        opacity: 0.85
+      });
+      const ring1 = new THREE.Mesh(torusGeom, ringMat);
+      ring1.rotation.x = Math.PI / 4;
+      group.add(ring1);
+      const ring2 = new THREE.Mesh(torusGeom, ringMat);
+      ring2.rotation.x = -Math.PI / 4;
+      ring2.rotation.y = Math.PI / 2.4;
+      group.add(ring2);
+      registerMaterial(node.id, ringMat, 0.85);
+    }
+
+    // Label (always-visible, billboarded)
+    const showLabel =
+      node.group === 'Root' ||
+      node.group === 'Modality' ||
+      node.group === 'Unified';
+    if (showLabel) {
+      const sprite = new SpriteText(node.name || node.id);
+      sprite.color = node.group === 'Unified' ? '#f5b942'
+                   : node.group === 'Modality' ? '#f4ead5'
+                   : '#f4ead5';
+      sprite.textHeight =
+        node.group === 'Root' ? 6 :
+        node.group === 'Modality' ? 5 : 3.6;
+      sprite.fontFace = 'IBM Plex Sans, sans-serif';
+      sprite.fontWeight = node.group === 'Modality' ? 600 : 500;
+      sprite.padding = 3;
+      sprite.borderRadius = 3;
+      sprite.backgroundColor = 'rgba(12,10,20,0.7)';
+      sprite.position.set(0, r + 4, 0);
+      sprite.material.depthWrite = false;
+      sprite.renderOrder = 999;
+      group.add(sprite);
+      registerMaterial(node.id, sprite.material, 1);
+    }
+
+    return group;
+  }
+
+  // ============================================================
+  //   Graph instance (3d-force-graph)
+  // ============================================================
+  const elem = document.getElementById('graph');
+  const Graph = ForceGraph3D({ controlType: 'orbit' })(elem)
+    .backgroundColor('rgba(0,0,0,0)')
+    .graphData(fullData)
+    .nodeId('id')
+    .nodeRelSize(4)
+    .nodeThreeObject(buildNodeObject)
+    .linkColor(l => {
+      if (highlightLinks.size > 0) {
+        return highlightLinks.has(l)
+          ? (STRENGTH_COLOUR[l.strength] || 'rgba(244,234,213,0.4)')
+          : 'rgba(244,234,213,0.025)';
+      }
+      return STRENGTH_COLOUR[l.strength] || 'rgba(244,234,213,0.18)';
+    })
+    .linkWidth(l => {
+      const base = STRENGTH_WIDTH[l.strength] || 0.4;
+      return highlightLinks.has(l) ? base * 1.8 : base;
+    })
+    .linkOpacity(0.6)
+    .linkCurvature(l => l.type === 'mapped_to' ? 0.18 : 0.05)
+    .linkDirectionalParticles(l => (highlightLinks.has(l) && l.strength === 'Strong') ? 3 : 0)
+    .linkDirectionalParticleWidth(1.6)
+    .linkDirectionalParticleColor(() => '#f5b942')
+    .linkDirectionalParticleSpeed(0.006)
+    .onNodeClick(handleNodeClick)
+    .onNodeHover(handleNodeHover)
+    .onBackgroundClick(() => clearFocus())
+    .cooldownTicks(220)
+    .d3AlphaDecay(0.025)
+    .d3VelocityDecay(0.32)
+    .warmupTicks(60);
+
+  // ============================================================
+  //   Force tuning — same hierarchical intent as 2D
+  // ============================================================
+  Graph.d3Force('charge').strength(n => {
+    if (n.group === 'Root') return -1200;
+    if (n.group === 'Modality') return -650;
+    if (n.group === 'Unified') return -380;
+    return -120;
+  });
+
+  Graph.d3Force('link').distance(l => {
+    if (l.type === 'contains') return 80;
+    if (l.type === 'has subtype') return 55;
+    if (l.type === 'mapped_to') {
+      return l.strength === 'Strong' ? 70 : l.strength === 'Partial' ? 100 : 130;
+    }
+    return 90;
+  }).strength(l => {
+    if (l.type === 'contains') return 0.7;
+    if (l.type === 'mapped_to') {
+      return l.strength === 'Strong' ? 0.5 : l.strength === 'Partial' ? 0.3 : 0.15;
+    }
+    return 0.4;
+  });
+
+  // ============================================================
+  //   Auto-rotate via OrbitControls
+  // ============================================================
+  let autoRotateOn = false;
+  function setAutoRotate(on) {
+    autoRotateOn = on;
+    const controls = Graph.controls();
+    if (controls) {
+      controls.autoRotate = on;
+      controls.autoRotateSpeed = 0.5;
+    }
+    const btn = document.getElementById('auto-rotate');
+    if (btn) {
+      btn.classList.toggle('on', on);
+      btn.textContent = on ? 'Auto-rotate · On' : 'Auto-rotate · Off';
+      btn.dataset.on = on ? 'true' : 'false';
+    }
+  }
+
+  // ============================================================
+  //   Highlight / hover / click
+  // ============================================================
+  function applyHighlight() {
+    const dimming = highlightNodes.size > 0;
+    fullData.nodes.forEach(n => {
+      const entry = nodeMaterials.get(n.id);
+      if (!entry) return;
+      const isHi = highlightNodes.has(n);
+      const dimmed = dimming && !isHi;
+      entry.mats.forEach((m, i) => {
+        m.opacity = dimmed ? entry.base[i] * 0.18 : entry.base[i];
+      });
+    });
+  }
+
+  function buildHighlight(node) {
+    highlightNodes.clear();
+    highlightLinks.clear();
+    highlightNodes.add(node);
+    (neighbours.get(node.id) || new Set()).forEach(id => {
+      const n = nodeById.get(id);
+      if (n) highlightNodes.add(n);
+    });
+    (linksByNode.get(node.id) || []).forEach(l => highlightLinks.add(l));
+  }
+
+  function handleNodeHover(node) {
+    if (focusedNode) return;
+    hoverNode = node || null;
+    if (node) buildHighlight(node);
+    else { highlightNodes.clear(); highlightLinks.clear(); }
+    applyHighlight();
+    elem.style.cursor = node ? 'pointer' : 'grab';
+  }
+
+  function handleNodeClick(node) {
+    focusedNode = node;
+    buildHighlight(node);
+    applyHighlight();
+    showInfo(node);
+    // Camera fly-to: reposition behind the node along its current vector
+    const dist = 90;
+    const x = node.x || 0, y = node.y || 0, z = node.z || 0;
+    const r = Math.hypot(x, y, z) || 1;
+    const ratio = 1 + dist / r;
+    Graph.cameraPosition(
+      { x: x * ratio, y: y * ratio, z: z * ratio },
+      node,
+      1800
+    );
+  }
+
+  function clearFocus() {
+    focusedNode = null;
+    hoverNode = null;
+    highlightNodes.clear();
+    highlightLinks.clear();
+    applyHighlight();
+    hideInfo();
+  }
+
+  // ============================================================
+  //   Info panel
+  // ============================================================
+  const info = document.getElementById('info');
+
+  function showInfo(node) {
+    const connections = (linksByNode.get(node.id) || []).slice();
+    const order = { 'Strong': 0, 'Partial': 1, 'Weak/Partial': 2, 'Core': 3, 'Source': 4, 'Context': 5 };
+    connections.sort((a, b) => (order[a.strength] ?? 9) - (order[b.strength] ?? 9));
+
+    const eyebrow =
+      node.group === 'Unified' ? 'Unified Category'
+      : node.group === 'Modality' ? 'Modality'
+      : node.group === 'Root' ? 'Taxonomy Root'
+      : `${node.group} · Source Subtype`;
+
+    let html = `
+      <div class="info-header">
+        <button class="info-close" aria-label="Close">×</button>
+        <div class="info-eyebrow">${eyebrow}</div>
+        <h2 class="info-title">${escapeHtml(node.name || node.id)}</h2>
+        ${node.userLabel ? `<div class="info-userlabel">"${escapeHtml(node.userLabel)}"</div>` : ''}
+      </div>
+      <div class="info-body">
+    `;
+
+    if (node.definition) {
+      html += `<div class="info-section"><div class="info-section-label">Definition</div><div class="info-section-text">${escapeHtml(node.definition)}</div></div>`;
+    }
+    if (node.scope) {
+      html += `<div class="info-section"><div class="info-section-label">Scope</div><div class="info-section-text">${escapeHtml(node.scope)}</div></div>`;
+    }
+    if (node.features) {
+      html += `<div class="info-section"><div class="info-section-label">Feature Basis</div><div class="info-section-text">${escapeHtml(node.features)}</div></div>`;
+    }
+
+    const mapped = connections.filter(l => l.type === 'mapped_to');
+    const contains = connections.filter(l => l.type === 'contains' || l.type === 'has subtype');
+
+    if (mapped.length) {
+      html += `<div class="info-divider"></div>
+        <div class="info-section-label" style="margin-bottom:10px;">${mapped.length} Mapping${mapped.length>1?'s':''}</div>
+        <ul class="connection-list">`;
+      mapped.forEach(l => {
+        const otherId = (typeof l.source === 'object' ? l.source.id : l.source) === node.id
+          ? (typeof l.target === 'object' ? l.target.id : l.target)
+          : (typeof l.source === 'object' ? l.source.id : l.source);
+        const other = nodeById.get(otherId);
+        if (!other) return;
+        const sclass = l.strength === 'Strong' ? 's-strong' : l.strength === 'Partial' ? 's-partial' : 's-weak';
+        html += `
+          <li class="connection-item" data-id="${escapeAttr(other.id)}">
+            <span class="dot" style="background:${COLOURS[other.group] || '#94a3b8'}"></span>
+            <span class="name">${escapeHtml(other.name || other.id)}</span>
+            <span class="strength ${sclass}">${escapeHtml(l.strength || '')}</span>
+          </li>`;
+        if (l.rationale) {
+          html += `<div class="rationale">${escapeHtml(l.rationale)}</div>`;
+        }
+      });
+      html += `</ul>`;
+    }
+
+    if (contains.length && (node.group === 'Modality' || node.group === 'Root')) {
+      html += `<div class="info-divider"></div>
+        <div class="info-section-label" style="margin-bottom:10px;">${contains.length} Item${contains.length>1?'s':''}</div>
+        <ul class="connection-list">`;
+      contains.forEach(l => {
+        const otherId = (typeof l.source === 'object' ? l.source.id : l.source) === node.id
+          ? (typeof l.target === 'object' ? l.target.id : l.target)
+          : (typeof l.source === 'object' ? l.source.id : l.source);
+        const other = nodeById.get(otherId);
+        if (!other) return;
+        html += `
+          <li class="connection-item" data-id="${escapeAttr(other.id)}">
+            <span class="dot" style="background:${COLOURS[other.group] || '#94a3b8'}"></span>
+            <span class="name">${escapeHtml(other.name || other.id)}</span>
+          </li>`;
+      });
+      html += `</ul>`;
+    }
+
+    html += `</div>`;
+    info.innerHTML = html;
+    info.classList.add('open');
+
+    info.querySelector('.info-close').addEventListener('click', clearFocus);
+    info.querySelectorAll('.connection-item').forEach(li => {
+      li.addEventListener('click', () => {
+        const id = li.dataset.id;
+        const target = nodeById.get(id);
+        if (target) handleNodeClick(target);
+      });
+    });
+  }
+
+  function hideInfo() { info.classList.remove('open'); }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+
+  // ============================================================
+  //   Filters
+  // ============================================================
+  const modalitySelect = document.getElementById('modality');
+  [...new Set(fullData.nodes.filter(n => ['Document','Video','Audio','Image','Dataset','Software'].includes(n.group)).map(n => n.group))]
+    .sort()
+    .forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      modalitySelect.appendChild(opt);
+    });
+
+  function applyFilters() {
+    // Material refs are tied to Three.js objects which the library
+    // recreates whenever graphData changes. Stale entries do no harm
+    // (they're never looked up via current node refs), but clearing
+    // keeps the registry tidy.
+    nodeMaterials.clear();
+    clearFocus();
+
+    const q = document.getElementById('search').value.trim().toLowerCase();
+    const mod = document.getElementById('modality').value;
+    const str = document.getElementById('strength').value;
+    const noFilters = !q && mod === 'all' && str === 'all';
+
+    if (noFilters) {
+      Graph.graphData(fullData);
+      updateStats(fullData);
+      return;
+    }
+
+    const keep = new Set();
+    const links = fullData.links.filter(l => {
+      const sourceId = typeof l.source === 'object' ? l.source.id : l.source;
+      const targetId = typeof l.target === 'object' ? l.target.id : l.target;
+      const s = nodeById.get(sourceId);
+      const t = nodeById.get(targetId);
+      const text = `${sourceId} ${targetId} ${s?.name || ''} ${t?.name || ''} ${l.rationale || ''}`.toLowerCase();
+      const modalityOk = mod === 'all' || s?.group === mod || t?.group === mod || sourceId === `Modality: ${mod}`;
+      const strengthOk = str === 'all' || l.strength === str || l.type !== 'mapped_to';
+      const searchOk = !q || text.includes(q);
+      const ok = modalityOk && strengthOk && searchOk;
+      if (ok) { keep.add(sourceId); keep.add(targetId); }
+      return ok;
+    });
+    const nodes = fullData.nodes.filter(n => keep.has(n.id));
+    Graph.graphData({ nodes, links });
+    updateStats({ nodes, links });
+  }
+
+  function updateStats(d) {
+    const cats = d.nodes.filter(n => n.group === 'Unified').length;
+    const srcs = d.nodes.filter(n => ['Document','Video','Audio','Image','Dataset','Software'].includes(n.group)).length;
+    const maps = d.links.filter(l => l.type === 'mapped_to').length;
+    document.getElementById('stat-cats').innerHTML = `<em>${cats}</em>`;
+    document.getElementById('stat-srcs').textContent = srcs;
+    document.getElementById('stat-maps').textContent = maps;
+  }
+  updateStats(fullData);
+
+  ['search','modality','strength'].forEach(id =>
+    document.getElementById(id).addEventListener('input', applyFilters)
+  );
+  document.getElementById('reset').addEventListener('click', () => {
+    document.getElementById('search').value = '';
+    document.getElementById('modality').value = 'all';
+    document.getElementById('strength').value = 'all';
+    nodeMaterials.clear();
+    clearFocus();
+    Graph.graphData(fullData);
+    updateStats(fullData);
+    Graph.zoomToFit(900, 80);
+  });
+
+  // Auto-rotate toggle
+  const rotBtn = document.getElementById('auto-rotate');
+  if (rotBtn) rotBtn.addEventListener('click', () => setAutoRotate(!autoRotateOn));
+
+  // ============================================================
+  //   Sizing
+  // ============================================================
+  function size() {
+    Graph.width(window.innerWidth).height(window.innerHeight);
+  }
+  window.addEventListener('resize', size);
+  size();
+
+  // Initial fit + slight delay so the simulation has settled
+  setTimeout(() => Graph.zoomToFit(1200, 80), 1500);
+
+  // Esc clears focus
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape') clearFocus();
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+{
+  "model_version": "v1",
+  "category": "Document",
+  "feature_signals": {
+    "sequential_steps": {
+      "signal_strength": "Strong",
+      "text_terms": ["step", "steps", "procedure", "instructions", "first", "next", "then", "finally"],
+      "per_hit_weight": 0.12,
+      "structural_threshold_key": "numbered_step_count",
+      "structural_threshold_min": 2,
+      "structural_bonus": 0.24,
+      "negative_terms": ["background", "overview", "policy", "governance"],
+      "negative_penalty_scale": 0.35
+    },
+    "action_verbs": {
+      "signal_strength": "Strong",
+      "text_terms": ["use", "apply", "install", "mix", "add", "remove", "check", "measure", "record", "select", "enter", "prepare"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["imperative_count"],
+      "required_context_bonus": 0.16,
+      "negative_terms": ["discusses", "examines", "policy", "recommendation"],
+      "negative_penalty_scale": 0.3
+    },
+    "ordered_flow": {
+      "signal_strength": "Strong",
+      "text_terms": ["first", "second", "third", "next", "then", "finally", "follow these steps"],
+      "per_hit_weight": 0.12,
+      "structural_threshold_key": "numbered_step_count",
+      "structural_threshold_min": 2,
+      "structural_bonus": 0.18,
+      "negative_terms": ["overview", "summary", "background"],
+      "negative_penalty_scale": 0.25
+    },
+    "tools_materials_mentioned": {
+      "signal_strength": "Partial",
+      "text_terms": ["tools", "materials", "equipment", "required", "supplies", "ingredients", "before you begin"],
+      "per_hit_weight": 0.10,
+      "paired_terms_any": [["tools", "materials"], ["required", "equipment"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["results", "discussion", "policy", "governance"],
+      "negative_penalty_scale": 0.25
+    },
+    "concept_breakdown": {
+      "signal_strength": "Strong",
+      "text_terms": ["what is", "how it works", "overview", "concept", "explains", "describes", "components", "process"],
+      "per_hit_weight": 0.10,
+      "paired_terms_any": [["what is", "how"], ["overview", "components"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["step 1", "follow these steps", "deliverable", "milestone"],
+      "negative_penalty_scale": 0.3
+    },
+    "examples": {
+      "signal_strength": "Partial",
+      "text_terms": ["example", "for example", "such as", "e.g.", "scenario", "illustration"],
+      "per_hit_weight": 0.10,
+      "negative_terms": ["appendix", "template", "placeholder"],
+      "negative_penalty_scale": 0.2
+    },
+    "structured_explanation": {
+      "signal_strength": "Strong",
+      "text_terms": ["introduction", "overview", "background", "components", "summary", "conclusion"],
+      "per_hit_weight": 0.10,
+      "structural_threshold_key": "heading_count",
+      "structural_threshold_min": 2,
+      "structural_bonus": 0.16,
+      "negative_terms": ["step 1", "task", "deliverable"],
+      "negative_penalty_scale": 0.25
+    },
+    "data_heavy": {
+      "signal_strength": "Strong",
+      "text_terms": ["table", "figure", "results", "analysis", "dataset", "metrics", "evidence", "measurement", "methodology"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["citation_count"],
+      "required_context_bonus": 0.12,
+      "negative_terms": ["flyer", "brochure", "announcement", "template"],
+      "negative_penalty_scale": 0.25
+    },
+    "structured_sections": {
+      "signal_strength": "Strong",
+      "text_terms": ["abstract", "introduction", "methods", "results", "discussion", "conclusion", "references"],
+      "per_hit_weight": 0.12,
+      "structural_threshold_key": "heading_count",
+      "structural_threshold_min": 3,
+      "structural_bonus": 0.18,
+      "negative_terms": ["step 1", "instructions", "placeholder"],
+      "negative_penalty_scale": 0.3
+    },
+    "formal_tone": {
+      "signal_strength": "Partial",
+      "text_terms": ["objective", "analysis", "evaluation", "methodology", "findings", "evidence", "therefore"],
+      "per_hit_weight": 0.09,
+      "negative_terms": ["quick guide", "announcement", "flyer", "brochure"],
+      "negative_penalty_scale": 0.2
+    },
+    "references": {
+      "signal_strength": "Strong",
+      "text_terms": ["references", "bibliography", "citation", "doi", "et al."],
+      "per_hit_weight": 0.12,
+      "structural_threshold_key": "citation_count",
+      "structural_threshold_min": 2,
+      "structural_bonus": 0.22,
+      "negative_terms": ["template", "announcement"],
+      "negative_penalty_scale": 0.2
+    },
+    "problem_solution_outcome_structure": {
+      "signal_strength": "Strong",
+      "text_terms": ["problem", "challenge", "solution", "implementation", "outcome", "result", "lesson learned"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["narrative_term_count"],
+      "required_context_bonus": 0.14,
+      "paired_terms_any": [["problem", "solution"], ["solution", "outcome"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["template", "policy", "step 1"],
+      "negative_penalty_scale": 0.25
+    },
+    "milestones": {
+      "signal_strength": "Strong",
+      "text_terms": ["milestone", "timeline", "phase", "work package", "wp", "schedule"],
+      "per_hit_weight": 0.11,
+      "required_context_keys_any": ["project_term_count"],
+      "required_context_bonus": 0.14,
+      "negative_terms": ["tutorial", "survey", "questionnaire"],
+      "negative_penalty_scale": 0.25
+    },
+    "deliverables": {
+      "signal_strength": "Strong",
+      "text_terms": ["deliverable", "deliverables", "project output", "reporting period", "task leader"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["project_term_count"],
+      "required_context_bonus": 0.16,
+      "negative_terms": ["step 1", "quiz", "placeholder"],
+      "negative_penalty_scale": 0.2
+    },
+    "structured_reporting": {
+      "signal_strength": "Strong",
+      "text_terms": ["objective", "progress", "status", "reporting", "summary of work", "completed activities"],
+      "per_hit_weight": 0.10,
+      "structural_threshold_key": "heading_count",
+      "structural_threshold_min": 2,
+      "structural_bonus": 0.12,
+      "negative_terms": ["announcement", "flyer", "template"],
+      "negative_penalty_scale": 0.2
+    },
+    "recommendations": {
+      "signal_strength": "Strong",
+      "text_terms": ["recommendation", "recommendations", "should", "proposed actions", "advised"],
+      "per_hit_weight": 0.10,
+      "negative_terms": ["step 1", "tool", "materials"],
+      "negative_penalty_scale": 0.2
+    },
+    "policy_framing": {
+      "signal_strength": "Strong",
+      "text_terms": ["policy", "regulation", "directive", "framework", "compliance", "guidance", "legal"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["policy_term_count"],
+      "required_context_bonus": 0.16,
+      "negative_terms": ["tutorial", "template", "case study"],
+      "negative_penalty_scale": 0.25
+    },
+    "governance_context": {
+      "signal_strength": "Strong",
+      "text_terms": ["governance", "stakeholder", "implementation framework", "institutional", "decision-making"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["policy_term_count"],
+      "required_context_bonus": 0.14,
+      "negative_terms": ["step 1", "materials", "placeholder"],
+      "negative_penalty_scale": 0.2
+    },
+    "short_format": {
+      "signal_strength": "Strong",
+      "text_terms": ["at a glance", "key points", "overview", "factsheet", "summary"],
+      "per_hit_weight": 0.10,
+      "structural_threshold_key": "word_count",
+      "structural_threshold_min": 1,
+      "structural_bonus": 0.0,
+      "negative_terms": ["methods", "references", "appendix"],
+      "negative_penalty_scale": 0.2
+    },
+    "bullet_points": {
+      "signal_strength": "Strong",
+      "text_terms": ["bullet points", "key points", "highlights"],
+      "per_hit_weight": 0.08,
+      "structural_threshold_key": "bullet_count",
+      "structural_threshold_min": 3,
+      "structural_bonus": 0.24,
+      "negative_terms": ["references", "methods", "discussion"],
+      "negative_penalty_scale": 0.2
+    },
+    "high_info_density": {
+      "signal_strength": "Partial",
+      "text_terms": ["summary", "key message", "highlights", "snapshot"],
+      "per_hit_weight": 0.10,
+      "structural_threshold_key": "bullet_count",
+      "structural_threshold_min": 2,
+      "structural_bonus": 0.12,
+      "negative_terms": ["methods", "background literature"],
+      "negative_penalty_scale": 0.2
+    },
+    "general_info": {
+      "signal_strength": "Partial",
+      "text_terms": ["information", "about", "overview", "introduction", "general information"],
+      "per_hit_weight": 0.08,
+      "negative_terms": ["methods", "step 1", "deliverable"],
+      "negative_penalty_scale": 0.2
+    },
+    "announcements": {
+      "signal_strength": "Strong",
+      "text_terms": ["announcement", "launch", "event", "join us", "coming soon", "registration", "news"],
+      "per_hit_weight": 0.10,
+      "negative_terms": ["methods", "references", "placeholder"],
+      "negative_penalty_scale": 0.2
+    },
+    "broad_audience_targeting": {
+      "signal_strength": "Partial",
+      "text_terms": ["for everyone", "for farmers", "for stakeholders", "public", "broad audience", "awareness"],
+      "per_hit_weight": 0.08,
+      "negative_terms": ["statistically", "methodology", "appendix"],
+      "negative_penalty_scale": 0.15
+    },
+    "predefined_structure": {
+      "signal_strength": "Strong",
+      "text_terms": ["template", "form", "checklist", "fill in", "to be completed", "predefined"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["placeholder_count"],
+      "required_context_bonus": 0.18,
+      "negative_terms": ["results", "discussion", "policy"],
+      "negative_penalty_scale": 0.2
+    },
+    "placeholders": {
+      "signal_strength": "Strong",
+      "text_terms": ["[name]", "[date]", "<title>", "enter here", "placeholder"],
+      "per_hit_weight": 0.12,
+      "structural_threshold_key": "placeholder_count",
+      "structural_threshold_min": 1,
+      "structural_bonus": 0.24,
+      "negative_terms": ["results", "methods", "case study"],
+      "negative_penalty_scale": 0.2
+    },
+    "repeatable_use": {
+      "signal_strength": "Partial",
+      "text_terms": ["reuse", "repeatable", "standard form", "each time", "for each record"],
+      "per_hit_weight": 0.10,
+      "negative_terms": ["single case", "case study", "announcement"],
+      "negative_penalty_scale": 0.2
+    }
+  }
+}

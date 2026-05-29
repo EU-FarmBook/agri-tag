@@ -1,0 +1,397 @@
+{
+  "model_version": "v2",
+  "supersedes": "v1",
+  "category": "Dataset",
+  "current_scope": {
+    "supported_upload_formats": [".csv", ".tsv", ".xlsx", ".json"],
+    "supported_url_suffix_hints": [".csv", ".tsv", ".xlsx", ".xls", ".json"],
+    "supported_ingesters": ["delimited_text", "xlsx_preview", "json_record_normalization"],
+    "excluded_for_now": [
+      ".parquet",
+      ".feather",
+      ".arrow",
+      ".orc",
+      ".geojson",
+      ".shp",
+      ".gpkg",
+      ".nc",
+      ".h5",
+      ".sqlite",
+      ".sav",
+      ".dta",
+      ".sas7bdat",
+      ".isoxml"
+    ],
+    "notes": [
+      "This scoped v2 spec is tailored to the formats the current runtime actually ingests today.",
+      "Unsupported scientific, geospatial bundle, embedded-database, and statistical formats are intentionally left out of runtime scoring until native ingestion exists.",
+      "The public runtime taxonomy is intentionally kept stable in this scoped v2. It does not introduce new dataset-only public labels beyond input_data, output_data, and survey_data."
+    ]
+  },
+  "file_format_baseline_signals": {
+    "_doc": "Format-level evidence that the uploaded asset is a dataset. In current scope, only formats the runtime ingests today are listed.",
+    "tabular_delimited": {
+      "extensions": [".csv", ".tsv"],
+      "mime_types": ["text/csv", "text/tab-separated-values"],
+      "dataset_confidence_bonus": 0.25
+    },
+    "spreadsheet": {
+      "extensions": [".xlsx"],
+      "mime_types": ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"],
+      "dataset_confidence_bonus": 0.22
+    },
+    "structured_json_records": {
+      "extensions": [".json"],
+      "mime_types": ["application/json", "text/json"],
+      "dataset_confidence_bonus": 0.15,
+      "note": "Lower bonus than delimited/spreadsheet files because JSON is also common in non-dataset content. Requires structural confirmation."
+    }
+  },
+  "structural_signals_universal": {
+    "_doc": "Format-agnostic dataset-shape detectors intended for current-scope CSV/TSV/XLSX/JSON ingestion outputs.",
+    "min_columns_for_dataset": 2,
+    "min_rows_for_dataset": 2,
+    "tabular_shape_bonus": 0.15,
+    "indicators": {
+      "header_row_detected": {
+        "bonus": 0.08,
+        "rule": "A column header line is present in the normalized preview."
+      },
+      "consistent_row_width": {
+        "bonus": 0.06,
+        "rule": "Preview rows suggest a stable tabular layout."
+      },
+      "date_column_present": {
+        "bonus": 0.07,
+        "patterns_any": ["date", "time", "timestamp", "datetime", "_at", "_on"]
+      },
+      "id_column_present": {
+        "bonus": 0.08,
+        "patterns_any": ["id", "_id", "uuid", "_uuid", "code", "_code", "key", "_key"]
+      },
+      "numeric_column_majority": {
+        "bonus": 0.05,
+        "rule": "The preview suggests that several columns carry short numeric values rather than prose."
+      }
+    },
+    "anti_indicators": {
+      "long_prose_columns": {
+        "penalty": 0.20,
+        "rule": "Very long cell-like text suggests a document or note table rather than a dataset."
+      },
+      "single_row_data": {
+        "penalty": 0.10
+      }
+    }
+  },
+  "scoring_orchestration_notes": [
+    "This scoped v2 spec is backward-compatible with the current runtime because existing runtime-used sections remain present: feature_signals, profile_mapping_overrides, synthetic_unified_subcategories, and broad_fallback_rule.",
+    "file_format_baseline_signals and structural_signals_universal are currently design-aligned metadata for the next dataset-confidence pass; they should not be treated as implemented runtime behavior unless the scorer explicitly consumes them.",
+    "Keep dataset subtype selection anchored in measurable signals extracted from normalized CSV/TSV/XLSX/JSON previews.",
+    "Prefer stable current-scope public labels over expanding the outward taxonomy prematurely."
+  ],
+  "feature_signals": {
+    "entity_focus": {
+      "signal_strength": "Partial",
+      "column_terms": ["field", "plot", "farm", "parcel", "crop", "animal", "livestock", "soil", "water", "orchard", "block_id", "field_id", "farm_id", "parcel_id", "plot_id", "crop_type", "variety", "cultivar", "species", "herd", "pen", "soil_type", "water_body"],
+      "text_terms": ["field", "plot", "farm", "parcel", "crop", "animal", "livestock", "soil", "water", "orchard", "variety", "cultivar", "species", "pasture", "greenhouse", "vineyard"],
+      "column_hit_weight": 0.26,
+      "text_hit_weight": 0.14,
+      "tabular_bonus": 0.08,
+      "paired_terms_any": [["field", "crop"], ["parcel", "crop"], ["animal", "species"], ["soil", "field"]],
+      "pair_bonus": 0.08,
+      "negative_terms": ["questionnaire", "respondent", "gps", "latitude", "longitude", "yield", "harvest", "fertiliser", "fertilizer", "application", "engine", "rpm"],
+      "negative_penalty_scale": 0.5
+    },
+    "event_log_structure": {
+      "signal_strength": "Strong",
+      "column_terms": ["event", "activity", "operation", "task", "schedule", "start_time", "end_time", "status", "operator", "performed_by", "operation_type", "activity_type", "task_id", "started_at", "completed_at", "duration", "work_order", "job"],
+      "text_terms": ["event", "activity", "operation", "task", "schedule", "operator", "workflow", "logbook", "performed", "completed", "maintenance"],
+      "column_hit_weight": 0.26,
+      "text_hit_weight": 0.14,
+      "tabular_bonus": 0.08,
+      "row_count_min": 3,
+      "row_count_bonus_terms": ["operation", "event", "activity", "task"],
+      "row_count_bonus": 0.18,
+      "paired_terms_any": [["operation", "date"], ["task", "status"], ["start_time", "end_time"], ["operator", "activity"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["respondent", "questionnaire", "likert", "yield", "harvest", "geometry", "latitude", "longitude"],
+      "negative_penalty_scale": 0.55
+    },
+    "input_application_records": {
+      "signal_strength": "Strong",
+      "column_terms": ["fertilizer", "fertiliser", "pesticide", "herbicide", "fungicide", "seed", "dose", "rate", "application", "input", "nutrient", "n_rate", "p_rate", "k_rate", "spray", "sprayer", "amendment", "manure", "irrigation", "water_use", "product_name", "active_ingredient"],
+      "text_terms": ["fertilizer", "fertiliser", "pesticide", "herbicide", "fungicide", "seed", "dose", "rate", "application", "input", "nutrient", "spray", "amendment", "manure", "irrigation", "product"],
+      "column_hit_weight": 0.26,
+      "text_hit_weight": 0.14,
+      "tabular_bonus": 0.08,
+      "paired_terms_any": [["fertiliser", "rate"], ["fertilizer", "rate"], ["pesticide", "application"], ["seed", "rate"], ["irrigation", "water_use"]],
+      "pair_bonus": 0.14,
+      "negative_terms": ["yield", "harvest", "respondent", "questionnaire", "latitude", "longitude", "rpm", "engine"],
+      "negative_penalty_scale": 0.55
+    },
+    "output_measurement_structure": {
+      "signal_strength": "Strong",
+      "column_terms": ["yield", "production", "harvest", "output", "quantity", "weight", "biomass", "tons", "kg", "productivity", "grain", "milk", "egg", "fruit", "tuber", "fresh_weight", "dry_weight", "marketable_yield"],
+      "text_terms": ["yield", "production", "harvest", "output", "quantity", "weight", "biomass", "tons", "kg", "productivity", "marketable", "harvested"],
+      "column_hit_weight": 0.26,
+      "text_hit_weight": 0.14,
+      "tabular_bonus": 0.08,
+      "paired_terms_any": [["yield", "kg"], ["production", "tons"], ["harvest", "weight"], ["biomass", "dry_weight"]],
+      "pair_bonus": 0.14,
+      "negative_terms": ["fertiliser", "fertilizer", "application", "respondent", "questionnaire", "geometry", "rpm", "engine"],
+      "negative_penalty_scale": 0.55
+    },
+    "temporal_series_structure": {
+      "signal_strength": "Strong",
+      "column_terms": ["date", "time", "timestamp", "datetime", "day", "month", "year", "hour", "minute", "daily", "hourly", "week", "week_of_year", "julian_day", "observation_time"],
+      "text_terms": ["date", "time", "timestamp", "datetime", "day", "month", "year", "hour", "minute", "daily", "hourly", "weather", "seasonal", "observed"],
+      "column_hit_weight": 0.26,
+      "text_hit_weight": 0.14,
+      "tabular_bonus": 0.08,
+      "row_count_min": 3,
+      "required_columns_any": ["date", "time", "timestamp"],
+      "row_count_bonus": 0.2,
+      "paired_terms_any": [["date", "temperature"], ["timestamp", "sensor"], ["date", "rainfall"], ["hour", "humidity"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["respondent", "questionnaire", "fertiliser", "fertilizer", "seed_rate", "yield", "harvest"],
+      "negative_penalty_scale": 0.5
+    },
+    "spatial_geometry_structure": {
+      "signal_strength": "Strong",
+      "column_terms": ["latitude", "longitude", "lat", "lon", "lng", "geometry", "geojson", "polygon", "wkt", "epsg", "bbox", "x", "y", "point", "linestring", "centroid", "utm", "northing", "easting", "parcel_boundary"],
+      "text_terms": ["latitude", "longitude", "lat", "lon", "lng", "geometry", "geojson", "polygon", "wkt", "epsg", "bbox", "x", "y", "gis", "spatial", "georeferenced", "parcel map"],
+      "column_hit_weight": 0.26,
+      "text_hit_weight": 0.14,
+      "tabular_bonus": 0.08,
+      "required_columns_any": ["lat", "lon", "lng", "geometry", "wkt", "epsg"],
+      "row_count_bonus": 0.22,
+      "paired_terms_any": [["latitude", "longitude"], ["x", "y"], ["geometry", "epsg"], ["wkt", "parcel"]],
+      "pair_bonus": 0.16,
+      "negative_terms": ["respondent", "questionnaire", "fertiliser", "fertilizer", "yield", "harvest", "rpm", "engine"],
+      "negative_penalty_scale": 0.45
+    },
+    "derived_aggregation_structure": {
+      "signal_strength": "Partial",
+      "column_terms": ["average", "mean", "median", "sum", "total", "index", "score", "kpi", "aggregated", "forecast", "estimate", "derived", "predicted", "modeled", "anomaly", "trend", "risk_score", "indicator"],
+      "text_terms": ["average", "mean", "median", "sum", "total", "index", "score", "kpi", "aggregated", "forecast", "estimate", "derived", "predicted", "modelled", "modeled", "trend", "scenario", "indicator"],
+      "column_hit_weight": 0.26,
+      "text_hit_weight": 0.14,
+      "tabular_bonus": 0.08,
+      "bonus_terms": ["average", "forecast", "index", "score", "aggregated"],
+      "bonus": 0.14,
+      "paired_terms_any": [["forecast", "date"], ["index", "score"], ["predicted", "yield"], ["scenario", "estimate"]],
+      "pair_bonus": 0.1,
+      "negative_terms": ["respondent", "questionnaire", "latitude", "longitude", "operator", "performed_by"],
+      "negative_penalty_scale": 0.45
+    },
+    "social_survey_structure": {
+      "signal_strength": "Strong",
+      "column_terms": ["survey", "respondent", "questionnaire", "likert", "demographic", "gender", "age", "household", "attitude", "response", "farmer_id", "education", "income", "adoption", "perception", "opinion", "interviewee"],
+      "text_terms": ["survey", "respondent", "questionnaire", "likert", "demographic", "gender", "age", "household", "attitude", "response", "interview", "perception", "opinion", "socioeconomic"],
+      "column_hit_weight": 0.26,
+      "text_hit_weight": 0.14,
+      "tabular_bonus": 0.08,
+      "paired_terms_any": [["respondent", "age"], ["questionnaire", "response"], ["household", "gender"], ["farmer_id", "perception"]],
+      "pair_bonus": 0.14,
+      "negative_terms": ["geometry", "latitude", "longitude", "yield", "harvest", "fertiliser", "fertilizer", "rpm", "engine"],
+      "negative_penalty_scale": 0.55
+    },
+    "machine_telemetry_structure": {
+      "signal_strength": "Strong",
+      "column_terms": ["sensor", "telemetry", "tractor", "machine", "equipment", "engine", "rpm", "fuel", "speed", "canbus", "gps", "implement", "odometer", "engine_load", "fuel_rate", "machine_id", "telematics", "hydraulic", "pto"],
+      "text_terms": ["sensor", "telemetry", "tractor", "machine", "equipment", "engine", "rpm", "fuel", "speed", "canbus", "gps", "implement", "telematics", "machine usage"],
+      "column_hit_weight": 0.26,
+      "text_hit_weight": 0.14,
+      "tabular_bonus": 0.08,
+      "paired_terms_any": [["engine", "rpm"], ["fuel", "speed"], ["machine_id", "sensor"], ["tractor", "implement"]],
+      "pair_bonus": 0.14,
+      "negative_terms": ["respondent", "questionnaire", "yield", "harvest", "fertiliser", "fertilizer", "likert"],
+      "negative_penalty_scale": 0.5
+    }
+  },
+  "profile_mapping_overrides": {
+    "entity_focused_dataset_farm_field_data": [
+      {
+        "unified_subcategory_id": "structured_domain_datasets",
+        "unified_subcategory_name": "Structured Domain Datasets",
+        "strength": "Strong"
+      }
+    ],
+    "event_operations_dataset_activity_records": [
+      {
+        "unified_subcategory_id": "monitoring_operations_and_sensor_records",
+        "unified_subcategory_name": "Monitoring, Operations & Sensor Records",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "structured_domain_datasets",
+        "unified_subcategory_name": "Structured Domain Datasets",
+        "strength": "Partial"
+      }
+    ],
+    "input_use_dataset_input_use_data": [
+      {
+        "unified_subcategory_id": "input_data",
+        "unified_subcategory_name": "Input Data",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "structured_domain_datasets",
+        "unified_subcategory_name": "Structured Domain Datasets",
+        "strength": "Partial"
+      }
+    ],
+    "output_production_dataset_production_data": [
+      {
+        "unified_subcategory_id": "output_data",
+        "unified_subcategory_name": "Output Data",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "structured_domain_datasets",
+        "unified_subcategory_name": "Structured Domain Datasets",
+        "strength": "Partial"
+      }
+    ],
+    "time_series_dataset_weather_and_time_data": [
+      {
+        "unified_subcategory_id": "monitoring_operations_and_sensor_records",
+        "unified_subcategory_name": "Monitoring, Operations & Sensor Records",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "structured_domain_datasets",
+        "unified_subcategory_name": "Structured Domain Datasets",
+        "strength": "Partial"
+      }
+    ],
+    "geospatial_dataset_map_based_or_geospatial_data": [
+      {
+        "unified_subcategory_id": "maps_and_geospatial_content",
+        "unified_subcategory_name": "Maps & Geospatial Content",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "structured_domain_datasets",
+        "unified_subcategory_name": "Structured Domain Datasets",
+        "strength": "Partial"
+      }
+    ],
+    "analytical_derived_dataset_analysis_and_insights_data": [
+      {
+        "unified_subcategory_id": "structured_domain_datasets",
+        "unified_subcategory_name": "Structured Domain Datasets",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "simulations_forecasts_and_model_visualisations",
+        "unified_subcategory_name": "Simulations, Forecasts & Model Visualisations",
+        "strength": "Partial"
+      },
+      {
+        "unified_subcategory_id": "technical_and_research_content",
+        "unified_subcategory_name": "Technical & Research Content",
+        "strength": "Partial"
+      },
+      {
+        "unified_subcategory_id": "charts_and_data_visualisations",
+        "unified_subcategory_name": "Charts & Data Visualisations",
+        "strength": "Weak/Partial"
+      }
+    ],
+    "survey_social_dataset_farmer_and_survey_data": [
+      {
+        "unified_subcategory_id": "survey_data",
+        "unified_subcategory_name": "Survey Data",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "structured_domain_datasets",
+        "unified_subcategory_name": "Structured Domain Datasets",
+        "strength": "Partial"
+      }
+    ],
+    "machine_equipment_dataset_machinery_and_sensor_data": [
+      {
+        "unified_subcategory_id": "monitoring_operations_and_sensor_records",
+        "unified_subcategory_name": "Monitoring, Operations & Sensor Records",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "structured_domain_datasets",
+        "unified_subcategory_name": "Structured Domain Datasets",
+        "strength": "Partial"
+      }
+    ]
+  },
+  "synthetic_unified_subcategories": [
+    {
+      "id": "input_data",
+      "name": "Input Data",
+      "definition": "Data describing inputs used in systems.",
+      "scope_note": "Use when focus is on inputs like fertiliser, pesticides, seed, feed, or water applications.",
+      "user_label": "Input usage",
+      "detailed_features": ["Application records", "quantities or rates", "timing", "input variables"],
+      "applicability_hints": ["Dataset"],
+      "imports_from_profiles": [
+        {
+          "source_profile_id": "input_use_dataset_input_use_data",
+          "source_profile_name": "Input-use dataset (Input Use Data)",
+          "source_modality": "Dataset",
+          "relation": "primary",
+          "why": "The main variables describe inputs applied to the system."
+        }
+      ]
+    },
+    {
+      "id": "output_data",
+      "name": "Output Data",
+      "definition": "Data describing production, yields, or realised outputs.",
+      "scope_note": "Use when focus is on results such as harvest, yield, production, or realised performance.",
+      "user_label": "Production data",
+      "detailed_features": ["Output variables", "yield metrics", "production totals", "performance indicators"],
+      "applicability_hints": ["Dataset"],
+      "imports_from_profiles": [
+        {
+          "source_profile_id": "output_production_dataset_production_data",
+          "source_profile_name": "Output/production dataset (Production Data)",
+          "source_modality": "Dataset",
+          "relation": "primary",
+          "why": "The main variables measure production or output."
+        }
+      ]
+    },
+    {
+      "id": "survey_data",
+      "name": "Survey Data",
+      "definition": "Data describing people, responses, or social attributes.",
+      "scope_note": "Use for survey-based, questionnaire, interview, or demographic datasets.",
+      "user_label": "Survey data",
+      "detailed_features": ["Survey structure", "responses", "demographic variables", "human-related records"],
+      "applicability_hints": ["Dataset"],
+      "imports_from_profiles": [
+        {
+          "source_profile_id": "survey_social_dataset_farmer_and_survey_data",
+          "source_profile_name": "Survey/social dataset (Farmer & Survey Data)",
+          "source_modality": "Dataset",
+          "relation": "primary",
+          "why": "The records describe survey responses or human/social attributes."
+        }
+      ]
+    }
+  ],
+  "broad_fallback_rule": {
+    "broad_subcategory_id": "structured_domain_datasets",
+    "specific_subcategory_ids": [
+      "input_data",
+      "output_data",
+      "survey_data",
+      "monitoring_operations_and_sensor_records",
+      "maps_and_geospatial_content",
+      "simulations_forecasts_and_model_visualisations"
+    ],
+    "min_specific_score": 0.45,
+    "margin_below_specific": 0.02
+  }
+}

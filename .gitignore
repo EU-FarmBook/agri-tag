@@ -162,7 +162,6 @@ cython_debug/
 
 # Environment variables and secrets
 !.env.sample
-!.env.sample
 
 # JSON data files (often contain sensitive data or are large)
 *.json
@@ -289,7 +288,3 @@ dump.rdb
 
 # MinIO / S3 local storage
 .minio.sys/
-
-.env.sample
-
-.env.sample

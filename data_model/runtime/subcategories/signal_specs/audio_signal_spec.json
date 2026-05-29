@@ -1,0 +1,83 @@
+{
+  "model_version": "v1",
+  "category": "Audio",
+  "feature_signals": {
+    "speaker_experience_centrality": {
+      "signal_strength": "Strong",
+      "text_terms": ["in my experience", "on our farm", "we implemented", "i learned", "from my perspective", "what we did"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["testimonial_count", "first_person_count"],
+      "required_context_bonus": 0.16,
+      "paired_terms_any": [["my", "experience"], ["our", "farm"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["step 1", "next slide", "panel discussion"],
+      "negative_penalty_scale": 0.3
+    },
+    "expert_explanatory_monologue": {
+      "signal_strength": "Strong",
+      "text_terms": ["today we will explain", "let me explain", "overview", "how it works", "in this topic", "expert explains", "concept", "system"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["line_count"],
+      "required_context_bonus": 0.0,
+      "paired_terms_any": [["let me", "explain"], ["how", "works"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["question?", "answer", "moderator", "panel"],
+      "negative_penalty_scale": 0.25
+    },
+    "case_narrative_arc": {
+      "signal_strength": "Strong",
+      "text_terms": ["challenge", "problem", "solution", "outcome", "result", "lesson learned", "implementation", "case study"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["testimonial_count"],
+      "required_context_bonus": 0.10,
+      "paired_terms_any": [["problem", "solution"], ["solution", "outcome"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["quiz", "next slide", "panel"],
+      "negative_penalty_scale": 0.25
+    },
+    "moderated_multi_voice_exchange": {
+      "signal_strength": "Strong",
+      "text_terms": ["moderator", "panel", "audience", "speaker", "let's hear", "joining us", "question from the audience"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["speaker_marker_count", "panel_terms_count"],
+      "required_context_bonus": 0.18,
+      "paired_terms_any": [["moderator", "panel"], ["audience", "question"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["step 1", "tutorial", "guide"],
+      "negative_penalty_scale": 0.25
+    },
+    "explicit_question_answer_format": {
+      "signal_strength": "Strong",
+      "text_terms": ["question", "answer", "q&a", "q:", "a:", "ask the expert", "asked"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["question_count", "question_phrase_count", "answer_phrase_count"],
+      "required_context_bonus": 0.18,
+      "paired_terms_any": [["question", "answer"], ["q:", "a:"]],
+      "pair_bonus": 0.14,
+      "negative_terms": ["methods", "references", "next slide"],
+      "negative_penalty_scale": 0.2
+    },
+    "sustained_single_speaker_presentation": {
+      "signal_strength": "Strong",
+      "text_terms": ["today i will present", "lecture", "seminar", "presentation", "talk", "welcome everyone"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["speaker_marker_count"],
+      "required_context_bonus": 0.06,
+      "paired_terms_any": [["today", "present"], ["seminar", "talk"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["question?", "panel", "moderator"],
+      "negative_penalty_scale": 0.25
+    },
+    "stepwise_procedural_instruction": {
+      "signal_strength": "Strong",
+      "text_terms": ["step", "first", "next", "then", "finally", "procedure", "instructions", "how to", "calibrate", "prepare"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["step_terms_count"],
+      "required_context_bonus": 0.16,
+      "paired_terms_any": [["first", "next"], ["then", "finally"], ["how to", "step"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["panel", "questionnaire", "milestone"],
+      "negative_penalty_scale": 0.25
+    }
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "model_version": "v1",
+  "category": "Software",
+  "feature_signals": {
+    "workflow_role_and_scope": {
+      "signal_strength": "Strong",
+      "text_terms": ["workflow", "planning", "records", "management", "operations", "module", "platform", "dashboard", "resource management", "farm management", "inventory", "compliance"],
+      "per_hit_weight": 0.18,
+      "bonus_terms": ["platform", "dashboard", "management", "farm management system", "fmis"],
+      "bonus": 0.16,
+      "paired_terms_any": [["planning", "records"], ["operations", "dashboard"], ["resource", "management"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["tutorial", "training", "quiz", "simulation", "forecast"],
+      "negative_penalty_scale": 0.45
+    },
+    "integration_and_interoperability_connectivity": {
+      "signal_strength": "Strong",
+      "text_terms": ["api", "integration", "interoperability", "connector", "sync", "import", "export", "plugin", "webhook", "third-party", "erp", "data exchange"],
+      "per_hit_weight": 0.18,
+      "bonus_terms": ["api", "integration", "import", "export", "connector"],
+      "bonus": 0.16,
+      "paired_terms_any": [["api", "integration"], ["import", "export"], ["connector", "sync"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["tutorial", "lesson", "quiz"],
+      "negative_penalty_scale": 0.35
+    },
+    "temporal_recording_orientation": {
+      "signal_strength": "Strong",
+      "text_terms": ["track", "tracking", "record", "logging", "history", "timeline", "time series", "monitor", "monitoring", "audit trail", "status history"],
+      "per_hit_weight": 0.18,
+      "bonus_terms": ["tracking", "logging", "history", "monitoring"],
+      "bonus": 0.14,
+      "paired_terms_any": [["track", "history"], ["record", "time"], ["monitoring", "dashboard"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["tutorial", "lesson", "forecast", "simulate"],
+      "negative_penalty_scale": 0.4
+    },
+    "input_modality_and_capture_mode": {
+      "signal_strength": "Partial",
+      "text_terms": ["mobile", "tablet", "offline", "form", "capture", "camera", "gps", "scan", "entry", "input", "barcode", "photo capture", "field form"],
+      "per_hit_weight": 0.16,
+      "bonus_terms": ["mobile app", "offline", "camera", "gps"],
+      "bonus": 0.12,
+      "paired_terms_any": [["mobile", "offline"], ["camera", "capture"], ["gps", "field"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["dashboard", "forecast", "automation", "quiz"],
+      "negative_penalty_scale": 0.35
+    },
+    "field_capture_and_observation_structure": {
+      "signal_strength": "Strong",
+      "text_terms": ["field", "scouting", "inspection", "observation", "geo-tagged", "in-field", "capture", "survey in field", "crop scouting", "sampling", "plot visit"],
+      "per_hit_weight": 0.18,
+      "bonus_terms": ["mobile app", "field app", "scouting", "inspection"],
+      "bonus": 0.14,
+      "paired_terms_any": [["field", "capture"], ["crop", "scouting"], ["inspection", "observation"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["forecast", "simulate", "quiz", "tutorial"],
+      "negative_penalty_scale": 0.4
+    },
+    "spatial_interaction_and_georeferenced_analysis": {
+      "signal_strength": "Strong",
+      "text_terms": ["map", "mapping", "gis", "geospatial", "parcel", "layer", "location", "georeferenced", "spatial", "geojson", "field boundary", "heatmap"],
+      "per_hit_weight": 0.18,
+      "bonus_terms": ["map", "gis", "parcel", "geospatial"],
+      "bonus": 0.16,
+      "paired_terms_any": [["map", "layer"], ["gis", "parcel"], ["spatial", "analysis"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["quiz", "tutorial", "lesson"],
+      "negative_penalty_scale": 0.3
+    },
+    "analysis_visualisation_and_insight_generation": {
+      "signal_strength": "Strong",
+      "text_terms": ["analysis", "analytics", "dashboard", "visualisation", "insight", "kpi", "reporting", "chart", "metrics", "trend", "benchmark"],
+      "per_hit_weight": 0.18,
+      "bonus_terms": ["dashboard", "chart", "analytics", "insight"],
+      "bonus": 0.14,
+      "paired_terms_any": [["dashboard", "analytics"], ["chart", "reporting"], ["kpi", "insight"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["lesson", "quiz", "automation", "actuator"],
+      "negative_penalty_scale": 0.35
+    },
+    "model_prediction_and_scenario_logic": {
+      "signal_strength": "Strong",
+      "text_terms": ["simulate", "simulation", "forecast", "prediction", "scenario", "optimisation", "optimization", "model", "what-if", "projection", "risk model"],
+      "per_hit_weight": 0.18,
+      "bonus_terms": ["simulation", "forecast", "prediction", "scenario"],
+      "bonus": 0.16,
+      "paired_terms_any": [["simulation", "scenario"], ["forecast", "prediction"], ["model", "optimisation"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["tutorial", "quiz", "field capture"],
+      "negative_penalty_scale": 0.35
+    },
+    "automation_control_and_triggering": {
+      "signal_strength": "Strong",
+      "text_terms": ["automation", "automatic", "control", "trigger", "alert", "schedule action", "irrigation control", "actuator", "rule engine", "device control", "command"],
+      "per_hit_weight": 0.18,
+      "bonus_terms": ["control", "automation", "alert", "actuator"],
+      "bonus": 0.14,
+      "paired_terms_any": [["automation", "control"], ["alert", "trigger"], ["irrigation", "control"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["tutorial", "lesson", "quiz"],
+      "negative_penalty_scale": 0.3
+    },
+    "learning_mechanics_and_training_design": {
+      "signal_strength": "Strong",
+      "text_terms": ["training", "learning", "lesson", "quiz", "tutorial", "guided", "practice", "assessment", "module", "course", "serious game"],
+      "per_hit_weight": 0.18,
+      "bonus_terms": ["training", "lesson", "quiz", "tutorial"],
+      "bonus": 0.14,
+      "paired_terms_any": [["training", "assessment"], ["lesson", "quiz"], ["guided", "practice"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["api", "connector", "automation", "forecast"],
+      "negative_penalty_scale": 0.35
+    }
+  },
+  "profile_mapping_overrides": {
+    "farm_management_system_fmis": [
+      {
+        "unified_subcategory_id": "software_tools_and_applications",
+        "unified_subcategory_name": "Software Tools & Applications",
+        "strength": "Strong"
+      }
+    ],
+    "monitoring_and_recording_tools": [
+      {
+        "unified_subcategory_id": "monitoring_operations_and_sensor_records",
+        "unified_subcategory_name": "Monitoring, Operations & Sensor Records",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "software_tools_and_applications",
+        "unified_subcategory_name": "Software Tools & Applications",
+        "strength": "Partial"
+      }
+    ],
+    "field_data_collection_apps": [
+      {
+        "unified_subcategory_id": "software_tools_and_applications",
+        "unified_subcategory_name": "Software Tools & Applications",
+        "strength": "Strong"
+      }
+    ],
+    "mapping_and_gis_tools": [
+      {
+        "unified_subcategory_id": "maps_and_geospatial_content",
+        "unified_subcategory_name": "Maps & Geospatial Content",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "software_tools_and_applications",
+        "unified_subcategory_name": "Software Tools & Applications",
+        "strength": "Partial"
+      }
+    ],
+    "data_analysis_and_dashboard_tools": [
+      {
+        "unified_subcategory_id": "software_tools_and_applications",
+        "unified_subcategory_name": "Software Tools & Applications",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "charts_and_data_visualisations",
+        "unified_subcategory_name": "Charts & Data Visualisations",
+        "strength": "Partial"
+      },
+      {
+        "unified_subcategory_id": "technical_and_research_content",
+        "unified_subcategory_name": "Technical & Research Content",
+        "strength": "Partial"
+      }
+    ],
+    "simulation_and_forecasting_tools": [
+      {
+        "unified_subcategory_id": "simulations_forecasts_and_model_visualisations",
+        "unified_subcategory_name": "Simulations, Forecasts & Model Visualisations",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "software_tools_and_applications",
+        "unified_subcategory_name": "Software Tools & Applications",
+        "strength": "Partial"
+      }
+    ],
+    "automation_and_control_systems": [
+      {
+        "unified_subcategory_id": "software_tools_and_applications",
+        "unified_subcategory_name": "Software Tools & Applications",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "monitoring_operations_and_sensor_records",
+        "unified_subcategory_name": "Monitoring, Operations & Sensor Records",
+        "strength": "Partial"
+      }
+    ],
+    "training_and_learning_applications": [
+      {
+        "unified_subcategory_id": "software_tools_and_applications",
+        "unified_subcategory_name": "Software Tools & Applications",
+        "strength": "Strong"
+      },
+      {
+        "unified_subcategory_id": "how_to_guides",
+        "unified_subcategory_name": "How-To Guides",
+        "strength": "Weak/Partial"
+      }
+    ]
+  },
+  "broad_fallback_rule": {
+    "broad_subcategory_id": "software_tools_and_applications",
+    "specific_subcategory_ids": [
+      "monitoring_operations_and_sensor_records",
+      "maps_and_geospatial_content",
+      "simulations_forecasts_and_model_visualisations"
+    ],
+    "min_specific_score": 0.4,
+    "margin_below_specific": 0.02
+  }
+}

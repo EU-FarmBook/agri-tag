@@ -1,0 +1,14 @@
+{
+  "model": "intfloat/multilingual-e5-small",
+  "source": "/agri-tag/data_model/runtime/topics/topic_signals.json",
+  "signals_version": "topic_signals_agrovoc_v1",
+  "topic_sizes": {
+    "Crop farming": 8140,
+    "Economics": 2978,
+    "Environment": 2667,
+    "Forestry": 1569,
+    "Livestock": 3866,
+    "Society": 2013
+  },
+  "num_topics": 6
+}

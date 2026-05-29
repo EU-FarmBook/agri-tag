@@ -1,0 +1,63 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files (should be mounted or passed separately)
+.env
+.env.local
+
+# Test files
+test_api.py
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation
+README.md
+architectures/ARCHITECTURE.md
+
+# Old/deprecated files
+old/
+stale/
+
+# Local development
+*.local.sh
+*.local.py
+
+# Sample files (not needed in container)
+files/
+
+# data_model: only runtime/ is needed in the image; build inputs/intermediates
+# and docs are not.
+data_model/build/
+data_model/docs/
+
+# Docker files themselves
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Misc
+.DS_Store
+*.log
+logs/

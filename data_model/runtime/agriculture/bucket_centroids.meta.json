@@ -1,0 +1,14 @@
+{
+  "model": "intfloat/multilingual-e5-small",
+  "sources": [
+    "/agri-tag/data_model/generated/agriculture_anchor_texts.jsonl"
+  ],
+  "bucket_sizes": {
+    "agri_bioeconomy": 3,
+    "crops_plants": 1346,
+    "farming_systems": 278,
+    "livestock_manure": 182,
+    "soil_water_nutrients": 1098
+  },
+  "num_buckets": 5
+}

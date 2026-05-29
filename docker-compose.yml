@@ -1,0 +1,42 @@
+services:
+  agri-tag:
+    platform: ${PLATFORM:-linux/amd64}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${APP_IMAGE:-ghcr.io/eu-farmbook/agri-tag:latest}
+    container_name: agri-tag
+    restart: unless-stopped
+    
+    # Environment configuration
+    env_file:
+      - .env
+    
+    # Port mapping (host:container)
+    ports:
+      - "${PORT:-8000}:8000"
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -1,0 +1,114 @@
+{
+  "model_version": "v1",
+  "category": "Video",
+  "feature_signals": {
+    "situated_field_context": {
+      "signal_strength": "Strong",
+      "text_terms": ["in the field", "on the farm", "field visit", "plot", "crop", "livestock", "orchard", "pasture", "demonstration plot"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["field_terms_count"],
+      "required_context_bonus": 0.16,
+      "paired_terms_any": [["field", "crop"], ["farm", "plot"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["next slide", "webinar", "panel discussion"],
+      "negative_penalty_scale": 0.25
+    },
+    "tool_operation_interface_focus": {
+      "signal_strength": "Strong",
+      "text_terms": ["tool", "machine", "app", "software", "interface", "dashboard", "button", "click", "menu", "tractor", "implement"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["tool_terms_count"],
+      "required_context_bonus": 0.14,
+      "paired_terms_any": [["click", "menu"], ["tractor", "implement"], ["app", "dashboard"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["audience question", "panel", "policy"],
+      "negative_penalty_scale": 0.2
+    },
+    "stepwise_action_demonstration": {
+      "signal_strength": "Strong",
+      "text_terms": ["step", "first", "next", "then", "finally", "show you", "demonstrate", "how to", "procedure"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["step_terms_count"],
+      "required_context_bonus": 0.16,
+      "paired_terms_any": [["first", "next"], ["then", "finally"], ["how to", "demonstrate"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["panel", "webinar", "questionnaire"],
+      "negative_penalty_scale": 0.25
+    },
+    "single_case_problem_solution_arc": {
+      "signal_strength": "Strong",
+      "text_terms": ["challenge", "problem", "solution", "outcome", "result", "lesson learned", "case study", "implementation"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["testimonial_count"],
+      "required_context_bonus": 0.10,
+      "paired_terms_any": [["problem", "solution"], ["solution", "outcome"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["quiz", "next slide", "moderator"],
+      "negative_penalty_scale": 0.25
+    },
+    "explanatory_contextual_narration": {
+      "signal_strength": "Strong",
+      "text_terms": ["overview", "documentary", "explainer", "how it works", "context", "system", "concept", "narration"],
+      "per_hit_weight": 0.10,
+      "paired_terms_any": [["how", "works"], ["system", "context"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["step 1", "q&a", "panel"],
+      "negative_penalty_scale": 0.2
+    },
+    "speaker_testimonial_centrality": {
+      "signal_strength": "Strong",
+      "text_terms": ["in my experience", "on our farm", "what we did", "from my perspective", "i learned", "testimonial"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["testimonial_count", "first_person_count"],
+      "required_context_bonus": 0.16,
+      "paired_terms_any": [["my", "experience"], ["our", "farm"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["panel", "next slide", "methods"],
+      "negative_penalty_scale": 0.25
+    },
+    "explicit_question_answer_turntaking": {
+      "signal_strength": "Strong",
+      "text_terms": ["question", "answer", "q&a", "q:", "a:", "ask the expert", "audience question"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["question_count", "question_phrase_count", "answer_phrase_count"],
+      "required_context_bonus": 0.18,
+      "paired_terms_any": [["question", "answer"], ["q:", "a:"]],
+      "pair_bonus": 0.14,
+      "negative_terms": ["methods", "appendix", "step 1"],
+      "negative_penalty_scale": 0.2
+    },
+    "moderated_multi_speaker_exchange": {
+      "signal_strength": "Strong",
+      "text_terms": ["moderator", "panel", "audience", "speaker", "joining us", "question from the audience"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["speaker_marker_count", "panel_terms_count"],
+      "required_context_bonus": 0.18,
+      "paired_terms_any": [["moderator", "panel"], ["audience", "question"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["tutorial", "step", "calibrate"],
+      "negative_penalty_scale": 0.25
+    },
+    "slide_or_screen_led_delivery": {
+      "signal_strength": "Strong",
+      "text_terms": ["slide", "slides", "screen", "webinar", "presentation", "next slide", "recorded webinar", "screen share"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["slide_terms_count"],
+      "required_context_bonus": 0.18,
+      "paired_terms_any": [["next", "slide"], ["screen", "share"], ["recorded", "webinar"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["in the field", "close-up", "symptom"],
+      "negative_penalty_scale": 0.25
+    },
+    "animation_model_based_representation": {
+      "signal_strength": "Strong",
+      "text_terms": ["simulation", "animation", "model", "forecast", "scenario", "prediction", "visualisation", "rendering"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["simulation_terms_count"],
+      "required_context_bonus": 0.16,
+      "paired_terms_any": [["simulation", "scenario"], ["model", "prediction"], ["animation", "visualisation"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["interview", "audience question", "farm visit"],
+      "negative_penalty_scale": 0.2
+    }
+  }
+}

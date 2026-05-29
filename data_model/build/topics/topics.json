@@ -1,0 +1,84 @@
+[{
+  "_id": "4vJjnGiw",
+  "created_ts": {
+    "$date": "2025-05-18T19:26:36.655Z"
+  },
+  "created_by": "System",
+  "updated_ts": {
+    "$date": "2025-05-18T19:26:36.655Z"
+  },
+  "updated_by": "System",
+  "version": 1,
+  "status": "Published",
+  "name": "Forestry"
+},
+{
+  "_id": "MoYMoMkm",
+  "created_ts": {
+    "$date": "2025-05-18T19:26:36.672Z"
+  },
+  "created_by": "System",
+  "updated_ts": {
+    "$date": "2025-05-18T19:26:36.672Z"
+  },
+  "updated_by": "System",
+  "version": 1,
+  "status": "Published",
+  "name": "Livestock"
+},
+{
+  "_id": "Pcej8smx",
+  "created_ts": {
+    "$date": "2025-05-18T19:26:36.677Z"
+  },
+  "created_by": "System",
+  "updated_ts": {
+    "$date": "2025-05-18T19:26:36.677Z"
+  },
+  "updated_by": "System",
+  "version": 1,
+  "status": "Published",
+  "name": "Crop farming"
+},
+{
+  "_id": "5VhDRee5",
+  "created_ts": {
+    "$date": "2025-05-18T19:26:36.685Z"
+  },
+  "created_by": "System",
+  "updated_ts": {
+    "$date": "2025-05-18T19:26:36.685Z"
+  },
+  "updated_by": "System",
+  "version": 1,
+  "status": "Published",
+  "name": "Economics"
+},
+{
+  "_id": "29DWibKt",
+  "created_ts": {
+    "$date": "2025-05-18T19:26:36.693Z"
+  },
+  "created_by": "System",
+  "updated_ts": {
+    "$date": "2025-05-18T19:26:36.693Z"
+  },
+  "updated_by": "System",
+  "version": 1,
+  "status": "Published",
+  "name": "Environment"
+},
+{
+  "_id": "jeWQELZy",
+  "created_ts": {
+    "$date": "2025-05-18T19:26:36.701Z"
+  },
+  "created_by": "System",
+  "updated_ts": {
+    "$date": "2025-05-18T19:26:36.701Z"
+  },
+  "updated_by": "System",
+  "version": 1,
+  "status": "Published",
+  "name": "Society"
+}]

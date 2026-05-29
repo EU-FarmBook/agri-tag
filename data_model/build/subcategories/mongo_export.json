@@ -1,0 +1,2438 @@
+[
+  {
+    "_id": "how_to_guides",
+    "id": "how_to_guides",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "How-To Guides",
+    "user_label": "How to do something",
+    "definition": "Step-by-step content that helps users perform a task, apply a method, or follow a procedure.",
+    "scope_note": "Use when there is an ordered task flow with actions. Avoid when content only explains a concept or only shows context without procedural steps.",
+    "feature_basis": [
+      "Sequential structure",
+      "action verbs",
+      "ordered flow",
+      "tools/materials",
+      "task execution",
+      "procedural guidance."
+    ],
+    "applicable_categories": [
+      "Audio",
+      "Document",
+      "Software Application",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Audio",
+        "merged_from": []
+      },
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Guide",
+          "Handbook",
+          "Manual",
+          "Tutorial"
+        ]
+      },
+      {
+        "modality": "Software",
+        "merged_from": []
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "how_to_instructional_documents",
+        "source_profile_name": "How-To / Instructional Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Same procedural intent and ordered steps.",
+        "merged_from": [
+          "Guide",
+          "Handbook",
+          "Manual",
+          "Tutorial"
+        ]
+      },
+      {
+        "source_profile_id": "how_to_procedure_demonstration",
+        "source_profile_name": "How-to/procedure demonstration",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Stepwise demonstration of a task.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "how_to_procedure_guide",
+        "source_profile_name": "How-to/procedure guide",
+        "source_modality": "Audio",
+        "applicable_category": "Audio",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Ordered procedural audio guidance.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "tool_machinery_software_walkthrough",
+        "source_profile_name": "Tool/machinery/software walkthrough",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Only when the walkthrough is instructional rather than merely descriptive.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "training_and_learning_applications",
+        "source_profile_name": "Training & Learning Applications",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only when the application teaches a procedure interactively.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 5 source mappings across Audio, Document, Software, Video.",
+    "specificity": "specific",
+    "short_description": "Step-by-step content that helps users perform a task, apply a method, or follow a procedure.",
+    "display_hint": "Use when there is an ordered task flow with actions. Avoid when content only explains a concept or only shows context without procedural steps.",
+    "examples": [
+      "App walkthrough video.",
+      "Audio guide for sprayer calibration.",
+      "Pest management training game",
+      "Sprayer calibration video."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose How-To Guides when the dominant evidence matches: Sequential structure, action verbs, ordered flow, tools/materials"
+  },
+  {
+    "_id": "explainers",
+    "id": "explainers",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Explainers",
+    "user_label": "Understand a topic",
+    "definition": "Content that explains a concept, system, process, or idea in an accessible way.",
+    "scope_note": "Use when the purpose is understanding what/why. Avoid if the dominant intent is task execution or evidence-heavy research.",
+    "feature_basis": [
+      "Concept breakdown",
+      "examples",
+      "context",
+      "explanatory narration",
+      "structured conceptual sections."
+    ],
+    "applicable_categories": [
+      "Audio",
+      "Document",
+      "Image",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Audio",
+        "merged_from": []
+      },
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Technical articles",
+          "explanatory texts"
+        ]
+      },
+      {
+        "modality": "Image",
+        "merged_from": []
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "explanatory_documents",
+        "source_profile_name": "Explanatory Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct conceptual explanation.",
+        "merged_from": [
+          "Technical articles",
+          "explanatory texts"
+        ]
+      },
+      {
+        "source_profile_id": "explainer_documentary",
+        "source_profile_name": "Explainer/documentary",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Narrative explanation of a concept or system.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "expert_commentary_explainer",
+        "source_profile_name": "Expert commentary/explainer",
+        "source_modality": "Audio",
+        "applicable_category": "Audio",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Single-speaker explanation of a topic or method.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "diagram_schematic",
+        "source_profile_name": "Diagram/schematic",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "When used to explain a process or structure.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "infographic",
+        "source_profile_name": "Infographic",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "When the infographic explains a topic rather than only summarising facts.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 5 source mappings across Audio, Document, Image, Video.",
+    "specificity": "specific",
+    "short_description": "Content that explains a concept, system, process, or idea in an accessible way.",
+    "display_hint": "Use when the purpose is understanding what/why. Avoid if the dominant intent is task execution or evidence-heavy research.",
+    "examples": [
+      "Agroforestry explainer.",
+      "Expert explaining pest management.",
+      "Infographic on pest management steps.",
+      "Irrigation system schematic."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Explainers when the dominant evidence matches: Concept breakdown, examples, context, explanatory narration"
+  },
+  {
+    "_id": "technical_and_research_content",
+    "id": "technical_and_research_content",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Technical & Research Content",
+    "user_label": "Technical details",
+    "definition": "Detailed analytical, scientific, technical, or evidence-based content.",
+    "scope_note": "Use for formal technical depth, methods, evidence, metrics, references, or research findings. Avoid for simplified summaries.",
+    "feature_basis": [
+      "Formal structure",
+      "data-heavy sections",
+      "methods/results",
+      "references",
+      "technical terminology",
+      "analysis."
+    ],
+    "applicable_categories": [
+      "Dataset",
+      "Document",
+      "Image",
+      "Software Application"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Dataset",
+        "merged_from": []
+      },
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Journal article",
+          "Review",
+          "Technical report",
+          "Thesis"
+        ]
+      },
+      {
+        "modality": "Image",
+        "merged_from": []
+      },
+      {
+        "modality": "Software",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "technical_and_scientific_documents",
+        "source_profile_name": "Technical & Scientific Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct match.",
+        "merged_from": [
+          "Journal article",
+          "Review",
+          "Technical report",
+          "Thesis"
+        ]
+      },
+      {
+        "source_profile_id": "analytical_derived_dataset_analysis_and_insights_data",
+        "source_profile_name": "Analytical/derived dataset (Analysis & Insights Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Derived/analytical data supports technical insight but remains dataset material.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "data_analysis_and_dashboard_tools",
+        "source_profile_name": "Data Analysis & Dashboard Tools",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Tools that generate or expose analytical insight.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "chart_graph",
+        "source_profile_name": "Chart/graph",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Visual technical evidence, not a full technical content type by itself.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 4 source mappings across Dataset, Document, Image, Software.",
+    "specificity": "broad",
+    "short_description": "Detailed analytical, scientific, technical, or evidence-based content.",
+    "display_hint": "Use for formal technical depth, methods, evidence, metrics, references, or research findings. Avoid for simplified summaries.",
+    "examples": [
+      "Aggregated performance metrics",
+      "Farm performance dashboard",
+      "Line graph of yield; bar chart comparing irrigation methods."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Technical & Research Content when the dominant evidence matches: Formal structure, data-heavy sections, methods/results, references"
+  },
+  {
+    "_id": "case_studies_and_practice_stories",
+    "id": "case_studies_and_practice_stories",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Case Studies & Practice Stories",
+    "user_label": "Real-world example",
+    "definition": "Real-world examples showing implementation, results, outcomes, and lessons learned.",
+    "scope_note": "Use when there is a clear context-action-result or problem-solution-outcome structure.",
+    "feature_basis": [
+      "Narrative arc",
+      "real setting",
+      "implementation details",
+      "outcome",
+      "lessons learned",
+      "before/after comparison."
+    ],
+    "applicable_categories": [
+      "Audio",
+      "Document",
+      "Image",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Audio",
+        "merged_from": []
+      },
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Practice abstract",
+          "case reports"
+        ]
+      },
+      {
+        "modality": "Image",
+        "merged_from": []
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "case_study_practice_documents",
+        "source_profile_name": "Case Study / Practice Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct match.",
+        "merged_from": [
+          "Practice abstract",
+          "case reports"
+        ]
+      },
+      {
+        "source_profile_id": "case_study",
+        "source_profile_name": "Case study",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Explicit problem-solution arc.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "case_study_practice_story",
+        "source_profile_name": "Case study/practice story",
+        "source_modality": "Audio",
+        "applicable_category": "Audio",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Real-world narrative with outcomes.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "field_observational_photograph",
+        "source_profile_name": "Field/observational photograph",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only if used as supporting evidence for a case story.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 4 source mappings across Audio, Document, Image, Video.",
+    "specificity": "specific",
+    "short_description": "Real-world examples showing implementation, results, outcomes, and lessons learned.",
+    "display_hint": "Use when there is a clear context-action-result or problem-solution-outcome structure.",
+    "examples": [
+      "Audio on farm innovation case.",
+      "Farm case study video.",
+      "Photo of grazing management."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Case Studies & Practice Stories when the dominant evidence matches: Narrative arc, real setting, implementation details, outcome"
+  },
+  {
+    "_id": "project_and_deliverable_reports",
+    "id": "project_and_deliverable_reports",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Project & Deliverable Reports",
+    "user_label": "Project results",
+    "definition": "Content reporting project progress, outputs, milestones, deliverables, or formal project results.",
+    "scope_note": "Use when tied to a project lifecycle, deliverable, milestone, or implementation report.",
+    "feature_basis": [
+      "Milestones",
+      "deliverables",
+      "progress updates",
+      "work packages",
+      "structured reporting",
+      "results."
+    ],
+    "applicable_categories": [
+      "Document"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Deliverable report",
+          "Journal article",
+          "Milestone report",
+          "Newsletter",
+          "Press release",
+          "Review",
+          "Technical report",
+          "Thesis"
+        ]
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "project_reports",
+        "source_profile_name": "Project Reports",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct project-lifecycle reporting.",
+        "merged_from": [
+          "Deliverable report",
+          "Milestone report"
+        ]
+      },
+      {
+        "source_profile_id": "technical_and_scientific_documents",
+        "source_profile_name": "Technical & Scientific Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Only when the technical document is also a project deliverable.",
+        "merged_from": [
+          "Journal article",
+          "Review",
+          "Technical report",
+          "Thesis"
+        ]
+      },
+      {
+        "source_profile_id": "informational_communication_documents",
+        "source_profile_name": "Informational / Communication Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only for project announcements or progress updates.",
+        "merged_from": [
+          "Newsletter",
+          "Press release"
+        ]
+      }
+    ],
+    "mapping_summary": "Merged from 3 source mappings across Document.",
+    "specificity": "specific",
+    "short_description": "Content reporting project progress, outputs, milestones, deliverables, or formal project results.",
+    "display_hint": "Use when tied to a project lifecycle, deliverable, milestone, or implementation report.",
+    "examples": [],
+    "non_examples": [],
+    "llm_display_hint": "Choose Project & Deliverable Reports when the dominant evidence matches: Milestones, deliverables, progress updates, work packages"
+  },
+  {
+    "_id": "policy_and_governance_content",
+    "id": "policy_and_governance_content",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Policy & Governance Content",
+    "user_label": "Policies & rules",
+    "definition": "Content about policy, regulation, governance, compliance, recommendations, or formal rules.",
+    "scope_note": "Use for policy guidance or regulatory framing. Avoid for general advice without policy/governance content.",
+    "feature_basis": [
+      "Policy framing",
+      "legal/regulatory context",
+      "governance recommendations",
+      "compliance language",
+      "rules."
+    ],
+    "applicable_categories": [
+      "Document"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Brochure",
+          "Factsheet",
+          "Flyer",
+          "Newsletter",
+          "Policy brief",
+          "Press release"
+        ]
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "policy_and_regulatory_documents",
+        "source_profile_name": "Policy & Regulatory Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct match.",
+        "merged_from": [
+          "Policy brief"
+        ]
+      },
+      {
+        "source_profile_id": "summaries_and_factsheets",
+        "source_profile_name": "Summaries & Factsheets",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Only when summarising policy or regulatory guidance.",
+        "merged_from": [
+          "Brochure",
+          "Factsheet",
+          "Flyer"
+        ]
+      },
+      {
+        "source_profile_id": "informational_communication_documents",
+        "source_profile_name": "Informational / Communication Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only for policy announcements or outreach.",
+        "merged_from": [
+          "Newsletter",
+          "Press release"
+        ]
+      }
+    ],
+    "mapping_summary": "Merged from 3 source mappings across Document.",
+    "specificity": "specific",
+    "short_description": "Content about policy, regulation, governance, compliance, recommendations, or formal rules.",
+    "display_hint": "Use for policy guidance or regulatory framing. Avoid for general advice without policy/governance content.",
+    "examples": [],
+    "non_examples": [],
+    "llm_display_hint": "Choose Policy & Governance Content when the dominant evidence matches: Policy framing, legal/regulatory context, governance recommendations, compliance language"
+  },
+  {
+    "_id": "summaries_factsheets_and_outreach",
+    "id": "summaries_factsheets_and_outreach",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Summaries, Factsheets & Outreach",
+    "user_label": "Quick summary",
+    "definition": "Condensed, awareness-oriented, or communication-oriented content for quick understanding.",
+    "scope_note": "Use for short summaries, brochures, flyers, newsletters, press releases, and communication material.",
+    "feature_basis": [
+      "Short format",
+      "bullet points",
+      "high information density",
+      "announcements",
+      "awareness language",
+      "broad audience."
+    ],
+    "applicable_categories": [
+      "Document",
+      "Image",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Brochure",
+          "Factsheet",
+          "Flyer",
+          "Newsletter",
+          "Press release"
+        ]
+      },
+      {
+        "modality": "Image",
+        "merged_from": []
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "summaries_and_factsheets",
+        "source_profile_name": "Summaries & Factsheets",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct short-format informational material.",
+        "merged_from": [
+          "Brochure",
+          "Factsheet",
+          "Flyer"
+        ]
+      },
+      {
+        "source_profile_id": "informational_communication_documents",
+        "source_profile_name": "Informational / Communication Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Awareness, outreach, and announcements.",
+        "merged_from": [
+          "Newsletter",
+          "Press release"
+        ]
+      },
+      {
+        "source_profile_id": "infographic",
+        "source_profile_name": "Infographic",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Visual summary format.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "recorded_presentation_webinar",
+        "source_profile_name": "Recorded presentation/webinar",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only if edited as a short awareness summary, not a full lecture.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 4 source mappings across Document, Image, Video.",
+    "specificity": "broad",
+    "short_description": "Condensed, awareness-oriented, or communication-oriented content for quick understanding.",
+    "display_hint": "Use for short summaries, brochures, flyers, newsletters, press releases, and communication material.",
+    "examples": [
+      "Infographic on pest management steps.",
+      "Recorded webinar."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Summaries, Factsheets & Outreach when the dominant evidence matches: Short format, bullet points, high information density, announcements"
+  },
+  {
+    "_id": "templates_and_reusable_formats",
+    "id": "templates_and_reusable_formats",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Templates & Reusable Formats",
+    "user_label": "Reusable format",
+    "definition": "Structured content intended to be reused, filled in, adapted, or applied repeatedly.",
+    "scope_note": "Use when the artefact is a reusable form, template, checklist, schema, or format rather than one-off information.",
+    "feature_basis": [
+      "Placeholders",
+      "predefined structure",
+      "repeatable use",
+      "reusable design",
+      "form-like structure."
+    ],
+    "applicable_categories": [
+      "Dataset",
+      "Document",
+      "Software Application"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Dataset",
+        "merged_from": []
+      },
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Templates"
+        ]
+      },
+      {
+        "modality": "Software",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "templates_and_reusable_documents",
+        "source_profile_name": "Templates & Reusable Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct match.",
+        "merged_from": [
+          "Templates"
+        ]
+      },
+      {
+        "source_profile_id": "entity_focused_dataset_farm_field_data",
+        "source_profile_name": "Entity-focused dataset (Farm/Field Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only if distributed as a reusable data-entry structure/schema.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "field_data_collection_apps",
+        "source_profile_name": "Field Data Collection Apps",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only when the app primarily provides reusable forms/templates.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 3 source mappings across Dataset, Document, Software.",
+    "specificity": "broad",
+    "short_description": "Structured content intended to be reused, filled in, adapted, or applied repeatedly.",
+    "display_hint": "Use when the artefact is a reusable form, template, checklist, schema, or format rather than one-off information.",
+    "examples": [
+      "Crop scouting app",
+      "Crop variety trials, livestock records, soil measurements"
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Templates & Reusable Formats when the dominant evidence matches: Placeholders, predefined structure, repeatable use, reusable design"
+  },
+  {
+    "_id": "field_demonstrations_and_observational_content",
+    "id": "field_demonstrations_and_observational_content",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Field Demonstrations & Observational Content",
+    "user_label": "See in practice",
+    "definition": "Content showing real-world conditions, practices, environments, or contexts without necessarily giving ordered instructions.",
+    "scope_note": "Use when the main value is observation or situated context. Avoid if it is primarily procedural; then use How-To Guides.",
+    "feature_basis": [
+      "In-situ context",
+      "real-world footage or photo",
+      "environmental setting",
+      "observational framing",
+      "practice visibility."
+    ],
+    "applicable_categories": [
+      "Document",
+      "Image",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Practice abstract",
+          "case reports"
+        ]
+      },
+      {
+        "modality": "Image",
+        "merged_from": []
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "field_demonstration_walkthrough",
+        "source_profile_name": "Field demonstration/walkthrough",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct situated field observation.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "field_observational_photograph",
+        "source_profile_name": "Field/observational photograph",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct real-world contextual imagery.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "aerial_remote_sensing_image",
+        "source_profile_name": "Aerial/remote-sensing image",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Observational land/surface context from above.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "case_study_practice_documents",
+        "source_profile_name": "Case Study / Practice Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only when the document mostly documents observed practice rather than a case arc.",
+        "merged_from": [
+          "Practice abstract",
+          "case reports"
+        ]
+      }
+    ],
+    "mapping_summary": "Merged from 4 source mappings across Document, Image, Video.",
+    "specificity": "specific",
+    "short_description": "Content showing real-world conditions, practices, environments, or contexts without necessarily giving ordered instructions.",
+    "display_hint": "Use when the main value is observation or situated context. Avoid if it is primarily procedural; then use How-To Guides.",
+    "examples": [
+      "Field walkthrough video.",
+      "NDVI field image.",
+      "Photo of grazing management."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Field Demonstrations & Observational Content when the dominant evidence matches: In-situ context, real-world footage or photo, environmental setting, observational framing"
+  },
+  {
+    "_id": "interviews_and_practitioner_perspectives",
+    "id": "interviews_and_practitioner_perspectives",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Interviews & Practitioner Perspectives",
+    "user_label": "Hear experiences",
+    "definition": "Content centred on one individual’s experience, viewpoint, testimony, or reflections.",
+    "scope_note": "Use for one main speaker/person. Avoid for multi-speaker discussions.",
+    "feature_basis": [
+      "One main speaker",
+      "personal perspective",
+      "interviewer prompts",
+      "first-person narrative",
+      "experiential tone."
+    ],
+    "applicable_categories": [
+      "Audio",
+      "Document",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Audio",
+        "merged_from": []
+      },
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Practice abstract",
+          "case reports"
+        ]
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "interview_practitioner_perspective",
+        "source_profile_name": "Interview/practitioner perspective",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct video interview/testimony.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "interview_practitioner_perspective",
+        "source_profile_name": "Interview/practitioner perspective",
+        "source_modality": "Audio",
+        "applicable_category": "Audio",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct audio interview/testimony.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "case_study_practice_documents",
+        "source_profile_name": "Case Study / Practice Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only if based primarily on an individual practitioner narrative.",
+        "merged_from": [
+          "Practice abstract",
+          "case reports"
+        ]
+      }
+    ],
+    "mapping_summary": "Merged from 3 source mappings across Audio, Document, Video.",
+    "specificity": "specific",
+    "short_description": "Content centred on one individual’s experience, viewpoint, testimony, or reflections.",
+    "display_hint": "Use for one main speaker/person. Avoid for multi-speaker discussions.",
+    "examples": [
+      "Farmer interview.",
+      "Interview with a farmer."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Interviews & Practitioner Perspectives when the dominant evidence matches: One main speaker, personal perspective, interviewer prompts, first-person narrative"
+  },
+  {
+    "_id": "panel_discussions",
+    "id": "panel_discussions",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Panel Discussions",
+    "user_label": "Different opinions",
+    "definition": "Multi-speaker discussions presenting different views, expertise, or perspectives.",
+    "scope_note": "Use when several participants contribute to a moderated or conversational exchange.",
+    "feature_basis": [
+      "Multiple speakers",
+      "moderation",
+      "exchange of views",
+      "contrasting opinions",
+      "conversational structure."
+    ],
+    "applicable_categories": [
+      "Audio",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Audio",
+        "merged_from": []
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "panel_discussion",
+        "source_profile_name": "Panel discussion",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct multi-speaker video discussion.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "panel_discussion",
+        "source_profile_name": "Panel discussion",
+        "source_modality": "Audio",
+        "applicable_category": "Audio",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct multi-speaker audio discussion.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 2 source mappings across Audio, Video.",
+    "specificity": "specific",
+    "short_description": "Multi-speaker discussions presenting different views, expertise, or perspectives.",
+    "display_hint": "Use when several participants contribute to a moderated or conversational exchange.",
+    "examples": [
+      "Panel discussion video.",
+      "Panel on irrigation practices."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Panel Discussions when the dominant evidence matches: Multiple speakers, moderation, exchange of views, contrasting opinions"
+  },
+  {
+    "_id": "q_and_a_sessions",
+    "id": "q_and_a_sessions",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Q&A Sessions",
+    "user_label": "Answers to questions",
+    "definition": "Content organised around explicit questions and answers.",
+    "scope_note": "Use when questions drive the structure. Avoid for general interviews unless there is a repeated Q&A format.",
+    "feature_basis": [
+      "Question-answer turns",
+      "problem-solving orientation",
+      "repeated Q&A pattern",
+      "audience/expert questions."
+    ],
+    "applicable_categories": [
+      "Audio",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Audio",
+        "merged_from": []
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "expert_q_and_a_session",
+        "source_profile_name": "Expert Q&A session",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct question-led video.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "q_and_a",
+        "source_profile_name": "Q&A",
+        "source_modality": "Audio",
+        "applicable_category": "Audio",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct question-led audio.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "interview_practitioner_perspective",
+        "source_profile_name": "Interview/practitioner perspective",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only if formatted as explicit repeated Q&A.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 3 source mappings across Audio, Video.",
+    "specificity": "specific",
+    "short_description": "Content organised around explicit questions and answers.",
+    "display_hint": "Use when questions drive the structure. Avoid for general interviews unless there is a repeated Q&A format.",
+    "examples": [
+      "Ask-the-expert session.",
+      "Ask-the-expert video.",
+      "Farmer interview."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Q&A Sessions when the dominant evidence matches: Question-answer turns, problem-solving orientation, repeated Q&A pattern, audience/expert questions."
+  },
+  {
+    "_id": "talks_lectures_and_webinars",
+    "id": "talks_lectures_and_webinars",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Talks, Lectures & Webinars",
+    "user_label": "Talks & webinars",
+    "definition": "Structured speaker-led presentations, seminars, lectures, or webinars.",
+    "scope_note": "Use when a presentation or lecture structure dominates, often with slides.",
+    "feature_basis": [
+      "Single-speaker or presenter-led flow",
+      "slide/screen-led delivery",
+      "seminar structure",
+      "limited interaction."
+    ],
+    "applicable_categories": [
+      "Audio",
+      "Document",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Audio",
+        "merged_from": []
+      },
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Journal article",
+          "Review",
+          "Technical report",
+          "Thesis"
+        ]
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "recorded_presentation_webinar",
+        "source_profile_name": "Recorded presentation/webinar",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct slide-driven or lecture-style video.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "talk_lecture",
+        "source_profile_name": "Talk/lecture",
+        "source_modality": "Audio",
+        "applicable_category": "Audio",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct lecture-style audio.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "technical_and_scientific_documents",
+        "source_profile_name": "Technical & Scientific Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only if the document is a presentation transcript or seminar paper.",
+        "merged_from": [
+          "Journal article",
+          "Review",
+          "Technical report",
+          "Thesis"
+        ]
+      }
+    ],
+    "mapping_summary": "Merged from 3 source mappings across Audio, Document, Video.",
+    "specificity": "specific",
+    "short_description": "Structured speaker-led presentations, seminars, lectures, or webinars.",
+    "display_hint": "Use when a presentation or lecture structure dominates, often with slides.",
+    "examples": [
+      "Recorded seminar talk.",
+      "Recorded webinar."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Talks, Lectures & Webinars when the dominant evidence matches: Single-speaker or presenter-led flow, slide/screen-led delivery, seminar structure, limited interaction."
+  },
+  {
+    "_id": "tool_machinery_and_software_walkthroughs",
+    "id": "tool_machinery_and_software_walkthroughs",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Tool, Machinery & Software Walkthroughs",
+    "user_label": "How tools work",
+    "definition": "Content demonstrating how a tool, machine, interface, or system operates.",
+    "scope_note": "Use when the object/tool is central. If the main intent is an ordered task, How-To Guides may be the primary category.",
+    "feature_basis": [
+      "Interface focus",
+      "operational close-ups",
+      "equipment focus",
+      "navigation or operation",
+      "screen capture."
+    ],
+    "applicable_categories": [
+      "Image",
+      "Software Application",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Image",
+        "merged_from": []
+      },
+      {
+        "modality": "Software",
+        "merged_from": []
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "tool_machinery_software_walkthrough",
+        "source_profile_name": "Tool/machinery/software walkthrough",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct tool/system walkthrough.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "farm_management_system_fmis",
+        "source_profile_name": "Farm Management System (FMIS)",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Software system category; not explanatory content unless presented as a walkthrough.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "mapping_and_gis_tools",
+        "source_profile_name": "Mapping & GIS Tools",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Tool type; may need walkthrough content for this category.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "equipment_infrastructure_photograph",
+        "source_profile_name": "Equipment/infrastructure photograph",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Shows the tool/equipment but may not explain operation.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 4 source mappings across Image, Software, Video.",
+    "specificity": "specific",
+    "short_description": "Content demonstrating how a tool, machine, interface, or system operates.",
+    "display_hint": "Use when the object/tool is central. If the main intent is an ordered task, How-To Guides may be the primary category.",
+    "examples": [
+      "App walkthrough video.",
+      "Farm management platform with planning + records",
+      "Parcel mapping tool",
+      "Photo of irrigation control unit."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Tool, Machinery & Software Walkthroughs when the dominant evidence matches: Interface focus, operational close-ups, equipment focus, navigation or operation"
+  },
+  {
+    "_id": "simulations_forecasts_and_model_visualisations",
+    "id": "simulations_forecasts_and_model_visualisations",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Simulations, Forecasts & Model Visualisations",
+    "user_label": "Simulate outcomes",
+    "definition": "Content or tools representing systems, future scenarios, or processes using models, simulation, forecasting, or animation.",
+    "scope_note": "Use when model-driven behaviour, prediction, scenario comparison, or simulated representation is central.",
+    "feature_basis": [
+      "Model-based representation",
+      "prediction",
+      "scenario logic",
+      "animation",
+      "forecasting",
+      "simulated outcomes."
+    ],
+    "applicable_categories": [
+      "Dataset",
+      "Image",
+      "Software Application",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Dataset",
+        "merged_from": []
+      },
+      {
+        "modality": "Image",
+        "merged_from": []
+      },
+      {
+        "modality": "Software",
+        "merged_from": []
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "simulation_animation_model_visualisation",
+        "source_profile_name": "Simulation/animation/model visualisation",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct simulation/model visualisation.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "simulation_and_forecasting_tools",
+        "source_profile_name": "Simulation & Forecasting Tools",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct model/prediction software.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "analytical_derived_dataset_analysis_and_insights_data",
+        "source_profile_name": "Analytical/derived dataset (Analysis & Insights Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "May contain model outputs or derived simulation results.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "diagram_schematic",
+        "source_profile_name": "Diagram/schematic",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only if representing model logic or simulated process.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 4 source mappings across Dataset, Image, Software, Video.",
+    "specificity": "specific",
+    "short_description": "Content or tools representing systems, future scenarios, or processes using models, simulation, forecasting, or animation.",
+    "display_hint": "Use when model-driven behaviour, prediction, scenario comparison, or simulated representation is central.",
+    "examples": [
+      "Aggregated performance metrics",
+      "Crop growth simulation tool",
+      "Irrigation simulation video.",
+      "Irrigation system schematic."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Simulations, Forecasts & Model Visualisations when the dominant evidence matches: Model-based representation, prediction, scenario logic, animation"
+  },
+  {
+    "_id": "charts_and_data_visualisations",
+    "id": "charts_and_data_visualisations",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Charts & Data Visualisations",
+    "user_label": "View data trends",
+    "definition": "Visual representations of numeric or measured data using graphical encodings.",
+    "scope_note": "Use when values are encoded visually. Avoid maps, photos, and general diagrams.",
+    "feature_basis": [
+      "Axes",
+      "scales",
+      "legends",
+      "numeric values",
+      "trends",
+      "comparisons",
+      "plotted variables."
+    ],
+    "applicable_categories": [
+      "Dataset",
+      "Image",
+      "Software Application"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Dataset",
+        "merged_from": []
+      },
+      {
+        "modality": "Image",
+        "merged_from": []
+      },
+      {
+        "modality": "Software",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "chart_graph",
+        "source_profile_name": "Chart/graph",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct visual quantitative encoding.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "data_analysis_and_dashboard_tools",
+        "source_profile_name": "Data Analysis & Dashboard Tools",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Software producing charts/dashboards.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "analytical_derived_dataset_analysis_and_insights_data",
+        "source_profile_name": "Analytical/derived dataset (Analysis & Insights Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Data source behind visualisations, not itself a chart.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 3 source mappings across Dataset, Image, Software.",
+    "specificity": "specific",
+    "short_description": "Visual representations of numeric or measured data using graphical encodings.",
+    "display_hint": "Use when values are encoded visually. Avoid maps, photos, and general diagrams.",
+    "examples": [
+      "Aggregated performance metrics",
+      "Farm performance dashboard",
+      "Line graph of yield; bar chart comparing irrigation methods."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Charts & Data Visualisations when the dominant evidence matches: Axes, scales, legends, numeric values"
+  },
+  {
+    "_id": "maps_and_geospatial_content",
+    "id": "maps_and_geospatial_content",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Maps & Geospatial Content",
+    "user_label": "View maps",
+    "definition": "Spatial or geographic content where location, geometry, boundaries, or spatial relationships are primary.",
+    "scope_note": "Use for cartographic visuals, GIS layers, geospatial datasets, and mapping tools.",
+    "feature_basis": [
+      "Coordinates",
+      "geometry",
+      "boundaries",
+      "parcels",
+      "spatial patterns",
+      "georeferenced analysis",
+      "maps."
+    ],
+    "applicable_categories": [
+      "Dataset",
+      "Image",
+      "Software Application"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Dataset",
+        "merged_from": []
+      },
+      {
+        "modality": "Image",
+        "merged_from": []
+      },
+      {
+        "modality": "Software",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "map",
+        "source_profile_name": "Map",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct geographic visual.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "geospatial_dataset_map_based_or_geospatial_data",
+        "source_profile_name": "Geospatial dataset (Map-based or Geospatial Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Spatial/geometric dataset.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "mapping_and_gis_tools",
+        "source_profile_name": "Mapping & GIS Tools",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Spatial software tools.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "aerial_remote_sensing_image",
+        "source_profile_name": "Aerial/remote-sensing image",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Spatial surface imagery, not necessarily a map.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 4 source mappings across Dataset, Image, Software.",
+    "specificity": "specific",
+    "short_description": "Spatial or geographic content where location, geometry, boundaries, or spatial relationships are primary.",
+    "display_hint": "Use for cartographic visuals, GIS layers, geospatial datasets, and mapping tools.",
+    "examples": [
+      "NDVI field image.",
+      "Parcel boundaries, GIS layers",
+      "Parcel mapping tool",
+      "Soil map of a region."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Maps & Geospatial Content when the dominant evidence matches: Coordinates, geometry, boundaries, parcels"
+  },
+  {
+    "_id": "infographics_and_visual_summaries",
+    "id": "infographics_and_visual_summaries",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Infographics & Visual Summaries",
+    "user_label": "Visual summary",
+    "definition": "Composite visual summaries combining text, icons, graphics, and mini-visuals.",
+    "scope_note": "Use for multi-panel visual explanation or summary. Avoid single charts, photos, maps, or diagrams.",
+    "feature_basis": [
+      "Multi-panel layout",
+      "icons",
+      "text blocks",
+      "mini-visuals",
+      "visual storytelling",
+      "summarised guidance."
+    ],
+    "applicable_categories": [
+      "Document",
+      "Image"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Brochure",
+          "Factsheet",
+          "Flyer",
+          "Newsletter",
+          "Press release"
+        ]
+      },
+      {
+        "modality": "Image",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "infographic",
+        "source_profile_name": "Infographic",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct visual summary.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "summaries_and_factsheets",
+        "source_profile_name": "Summaries & Factsheets",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Similar summary intent, but document format.",
+        "merged_from": [
+          "Brochure",
+          "Factsheet",
+          "Flyer"
+        ]
+      },
+      {
+        "source_profile_id": "informational_communication_documents",
+        "source_profile_name": "Informational / Communication Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Awareness/outreach material may contain infographic-like content.",
+        "merged_from": [
+          "Newsletter",
+          "Press release"
+        ]
+      }
+    ],
+    "mapping_summary": "Merged from 3 source mappings across Document, Image.",
+    "specificity": "specific",
+    "short_description": "Composite visual summaries combining text, icons, graphics, and mini-visuals.",
+    "display_hint": "Use for multi-panel visual explanation or summary. Avoid single charts, photos, maps, or diagrams.",
+    "examples": [
+      "Infographic on pest management steps."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Infographics & Visual Summaries when the dominant evidence matches: Multi-panel layout, icons, text blocks, mini-visuals"
+  },
+  {
+    "_id": "diagrams_and_schematics",
+    "id": "diagrams_and_schematics",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Diagrams & Schematics",
+    "user_label": "Understand structure",
+    "definition": "Non-photographic visual representations of structures, relationships, workflows, or processes.",
+    "scope_note": "Use for schematics, flow diagrams, annotated illustrations, and abstract process visuals.",
+    "feature_basis": [
+      "Schematic representation",
+      "labels",
+      "arrows",
+      "abstracted parts",
+      "process flow",
+      "relationships."
+    ],
+    "applicable_categories": [
+      "Document",
+      "Image",
+      "Video"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Document",
+        "merged_from": [
+          "Technical articles",
+          "explanatory texts"
+        ]
+      },
+      {
+        "modality": "Image",
+        "merged_from": []
+      },
+      {
+        "modality": "Video",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "diagram_schematic",
+        "source_profile_name": "Diagram/schematic",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct schematic/process visual.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "explanatory_documents",
+        "source_profile_name": "Explanatory Documents",
+        "source_modality": "Document",
+        "applicable_category": "Document",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only where the document’s main object is an embedded diagram/schematic.",
+        "merged_from": [
+          "Technical articles",
+          "explanatory texts"
+        ]
+      },
+      {
+        "source_profile_id": "simulation_animation_model_visualisation",
+        "source_profile_name": "Simulation/animation/model visualisation",
+        "source_modality": "Video",
+        "applicable_category": "Video",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only if the video uses schematic animation as the dominant representation.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 3 source mappings across Document, Image, Video.",
+    "specificity": "specific",
+    "short_description": "Non-photographic visual representations of structures, relationships, workflows, or processes.",
+    "display_hint": "Use for schematics, flow diagrams, annotated illustrations, and abstract process visuals.",
+    "examples": [
+      "Irrigation simulation video.",
+      "Irrigation system schematic."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Diagrams & Schematics when the dominant evidence matches: Schematic representation, labels, arrows, abstracted parts"
+  },
+  {
+    "_id": "photographs_and_field_images",
+    "id": "photographs_and_field_images",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Photographs & Field Images",
+    "user_label": "Field photos",
+    "definition": "Real-world photographic images showing context, equipment, conditions, or environments.",
+    "scope_note": "Use for contextual imagery. Use Diagnostic & Inspection Images if identification/diagnosis is the main purpose.",
+    "feature_basis": [
+      "Real-world capture",
+      "environmental context",
+      "visible practices",
+      "equipment or infrastructure",
+      "non-diagnostic framing."
+    ],
+    "applicable_categories": [
+      "Image"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Image",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "field_observational_photograph",
+        "source_profile_name": "Field/observational photograph",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct field/context image.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "equipment_infrastructure_photograph",
+        "source_profile_name": "Equipment/infrastructure photograph",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct equipment/infrastructure photo.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "aerial_remote_sensing_image",
+        "source_profile_name": "Aerial/remote-sensing image",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Photographic/sensor-derived field view from above.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 3 source mappings across Image.",
+    "specificity": "broad",
+    "short_description": "Real-world photographic images showing context, equipment, conditions, or environments.",
+    "display_hint": "Use for contextual imagery. Use Diagnostic & Inspection Images if identification/diagnosis is the main purpose.",
+    "examples": [
+      "NDVI field image.",
+      "Photo of grazing management.",
+      "Photo of irrigation control unit."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Photographs & Field Images when the dominant evidence matches: Real-world capture, environmental context, visible practices, equipment or infrastructure"
+  },
+  {
+    "_id": "diagnostic_and_inspection_images",
+    "id": "diagnostic_and_inspection_images",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Diagnostic & Inspection Images",
+    "user_label": "Identify problems",
+    "definition": "Images focused on recognising symptoms, defects, damage, pests, diseases, or other identifiable conditions.",
+    "scope_note": "Use when recognition, diagnosis, or inspection is primary. Avoid general field photos.",
+    "feature_basis": [
+      "Close-up detail",
+      "high specificity",
+      "visible symptoms/damage",
+      "identification cues",
+      "inspection focus."
+    ],
+    "applicable_categories": [
+      "Image",
+      "Software Application"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Image",
+        "merged_from": []
+      },
+      {
+        "modality": "Software",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "diagnostic_photograph",
+        "source_profile_name": "Diagnostic photograph",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Direct diagnostic/inspection photo.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "aerial_remote_sensing_image",
+        "source_profile_name": "Aerial/remote-sensing image",
+        "source_modality": "Image",
+        "applicable_category": "Image",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Only where the sensor image is used for detecting field problems.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "field_data_collection_apps",
+        "source_profile_name": "Field Data Collection Apps",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Weak/Partial",
+        "mapping_strength_definition": "The source subtype may support the unified category in edge cases, but should not be the default mapping.",
+        "why": "Only if the app is used for scouting/inspection capture.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 3 source mappings across Image, Software.",
+    "specificity": "specific",
+    "short_description": "Images focused on recognising symptoms, defects, damage, pests, diseases, or other identifiable conditions.",
+    "display_hint": "Use when recognition, diagnosis, or inspection is primary. Avoid general field photos.",
+    "examples": [
+      "Crop scouting app",
+      "Leaf disease close-up.",
+      "NDVI field image."
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Diagnostic & Inspection Images when the dominant evidence matches: Close-up detail, high specificity, visible symptoms/damage, identification cues"
+  },
+  {
+    "_id": "structured_domain_datasets",
+    "id": "structured_domain_datasets",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Structured Domain Datasets",
+    "user_label": "Download domain data",
+    "definition": "Structured datasets describing entities, activities, inputs, outputs, surveys, or derived information for analysis or reuse.",
+    "scope_note": "Use for downloadable or machine-readable data where the dataset itself is the knowledge object. More specific dataset-focused unified categories below may also apply.",
+    "feature_basis": [
+      "Records",
+      "variables",
+      "tabular/structured format",
+      "machine-readable",
+      "reusable",
+      "domain entities",
+      "survey or production records."
+    ],
+    "applicable_categories": [
+      "Dataset"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Dataset",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "entity_focused_dataset_farm_field_data",
+        "source_profile_name": "Entity-focused dataset (Farm/Field Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Entity-centred records.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "event_operations_dataset_activity_records",
+        "source_profile_name": "Event/operations dataset (Activity Records)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Activity or workflow records.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "input_use_dataset_input_use_data",
+        "source_profile_name": "Input-use dataset (Input Use Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Input application records.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "output_production_dataset_production_data",
+        "source_profile_name": "Output/production dataset (Production Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Production/yield records.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "survey_social_dataset_farmer_and_survey_data",
+        "source_profile_name": "Survey/social dataset (Farmer & Survey Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Survey/demographic records.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "analytical_derived_dataset_analysis_and_insights_data",
+        "source_profile_name": "Analytical/derived dataset (Analysis & Insights Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Processed/derived data.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "time_series_dataset_weather_and_time_data",
+        "source_profile_name": "Time-series dataset (Weather & Time Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Also maps strongly to Monitoring & Sensor Records.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "machine_equipment_dataset_machinery_and_sensor_data",
+        "source_profile_name": "Machine/equipment dataset (Machinery & Sensor Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Also maps strongly to Monitoring & Sensor Records.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "geospatial_dataset_map_based_or_geospatial_data",
+        "source_profile_name": "Geospatial dataset (Map-based or Geospatial Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Also maps strongly to Maps & Geospatial Content.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 9 source mappings across Dataset.",
+    "specificity": "broad",
+    "short_description": "Structured datasets describing entities, activities, inputs, outputs, surveys, or derived information for analysis or reuse.",
+    "display_hint": "Use for downloadable or machine-readable data where the dataset itself is the knowledge object. More specific dataset-focused unified categories below may also apply.",
+    "examples": [
+      "Aggregated performance metrics",
+      "Crop variety trials, livestock records, soil measurements",
+      "Farmer survey responses",
+      "Fertiliser application records",
+      "Field operations logs, task schedules",
+      "Parcel boundaries, GIS layers",
+      "Tractor logs, sensor data",
+      "Weather station data",
+      "Yield per field dataset"
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Structured Domain Datasets when the dominant evidence matches: Records, variables, tabular/structured format, machine-readable"
+  },
+  {
+    "_id": "monitoring_operations_and_sensor_records",
+    "id": "monitoring_operations_and_sensor_records",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Monitoring, Operations & Sensor Records",
+    "user_label": "Track changes",
+    "definition": "Time-oriented records or tools used to monitor, log, track, or review changes, activities, telemetry, and operations over time.",
+    "scope_note": "Use where temporal tracking, repeated measurement, machinery logs, monitoring, or operational history is central.",
+    "feature_basis": [
+      "Time series",
+      "repeated measurements",
+      "event logs",
+      "telemetry",
+      "monitoring dashboards",
+      "historical records."
+    ],
+    "applicable_categories": [
+      "Dataset",
+      "Software Application"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Dataset",
+        "merged_from": []
+      },
+      {
+        "modality": "Software",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "time_series_dataset_weather_and_time_data",
+        "source_profile_name": "Time-series dataset (Weather & Time Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Time-indexed records.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "machine_equipment_dataset_machinery_and_sensor_data",
+        "source_profile_name": "Machine/equipment dataset (Machinery & Sensor Data)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Equipment logs and telemetry.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "event_operations_dataset_activity_records",
+        "source_profile_name": "Event/operations dataset (Activity Records)",
+        "source_modality": "Dataset",
+        "applicable_category": "Dataset",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Logged actions or operations over time.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "monitoring_and_recording_tools",
+        "source_profile_name": "Monitoring & Recording Tools",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Software for tracking/logging/reviewing over time.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "automation_and_control_systems",
+        "source_profile_name": "Automation & Control Systems",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Partial",
+        "mapping_strength_definition": "The source subtype overlaps, but only under specific conditions or as a secondary classification.",
+        "why": "Often uses monitoring/trigger data but main purpose is control.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 5 source mappings across Dataset, Software.",
+    "specificity": "specific",
+    "short_description": "Time-oriented records or tools used to monitor, log, track, or review changes, activities, telemetry, and operations over time.",
+    "display_hint": "Use where temporal tracking, repeated measurement, machinery logs, monitoring, or operational history is central.",
+    "examples": [
+      "Automated irrigation control system",
+      "Field operations logs, task schedules",
+      "Herd health tracking app",
+      "Tractor logs, sensor data",
+      "Weather station data"
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Monitoring, Operations & Sensor Records when the dominant evidence matches: Time series, repeated measurements, event logs, telemetry"
+  },
+  {
+    "_id": "software_tools_and_applications",
+    "id": "software_tools_and_applications",
+    "created_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "created_by": "System",
+    "updated_ts": {
+      "$date": "2026-05-06T14:32:16.866Z"
+    },
+    "updated_by": "System",
+    "version": 5,
+    "status": "Published",
+    "model_version": "v5",
+    "name": "Software Tools & Applications",
+    "user_label": "Use tools",
+    "definition": "Interactive software systems, applications, dashboards, control systems, or digital tools that perform workflows or support decisions.",
+    "scope_note": "Use when the uploaded knowledge object is a software application package, description, or non-executable software-related object accepted by the platform.",
+    "feature_basis": [
+      "Interactive system",
+      "interface",
+      "workflow",
+      "decision support",
+      "automation",
+      "interoperability",
+      "data capture",
+      "dashboards."
+    ],
+    "applicable_categories": [
+      "Software Application"
+    ],
+    "source_modalities": [
+      {
+        "modality": "Software",
+        "merged_from": []
+      }
+    ],
+    "source_mappings": [
+      {
+        "source_profile_id": "farm_management_system_fmis",
+        "source_profile_name": "Farm Management System (FMIS)",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Integrated farm management platform.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "monitoring_and_recording_tools",
+        "source_profile_name": "Monitoring & Recording Tools",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Monitoring/logging software.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "field_data_collection_apps",
+        "source_profile_name": "Field Data Collection Apps",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Field capture software.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "mapping_and_gis_tools",
+        "source_profile_name": "Mapping & GIS Tools",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Spatial/GIS software.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "data_analysis_and_dashboard_tools",
+        "source_profile_name": "Data Analysis & Dashboard Tools",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Analytics/dashboard software.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "simulation_and_forecasting_tools",
+        "source_profile_name": "Simulation & Forecasting Tools",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Simulation/forecasting software.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "automation_and_control_systems",
+        "source_profile_name": "Automation & Control Systems",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Control/automation software.",
+        "merged_from": []
+      },
+      {
+        "source_profile_id": "training_and_learning_applications",
+        "source_profile_name": "Training & Learning Applications",
+        "source_modality": "Software",
+        "applicable_category": "Software Application",
+        "mapping_strength": "Strong",
+        "mapping_strength_definition": "The source subtype directly matches the unified category intent and dominant features.",
+        "why": "Learning/training software.",
+        "merged_from": []
+      }
+    ],
+    "mapping_summary": "Merged from 8 source mappings across Software.",
+    "specificity": "broad",
+    "short_description": "Interactive software systems, applications, dashboards, control systems, or digital tools that perform workflows or support decisions.",
+    "display_hint": "Use when the uploaded knowledge object is a software application package, description, or non-executable software-related object accepted by the platform.",
+    "examples": [
+      "Automated irrigation control system",
+      "Crop growth simulation tool",
+      "Crop scouting app",
+      "Farm management platform with planning + records",
+      "Farm performance dashboard",
+      "Herd health tracking app",
+      "Parcel mapping tool",
+      "Pest management training game"
+    ],
+    "non_examples": [],
+    "llm_display_hint": "Choose Software Tools & Applications when the dominant evidence matches: Interactive system, interface, workflow, decision support"
+  }
+]

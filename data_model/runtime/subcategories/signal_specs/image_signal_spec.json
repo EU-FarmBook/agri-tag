@@ -1,0 +1,106 @@
+{
+  "model_version": "v1",
+  "category": "Image",
+  "feature_signals": {
+    "quantitative_plot_encoding": {
+      "signal_strength": "Strong",
+      "text_terms": ["x-axis", "y-axis", "axis", "axes", "legend", "series", "bar", "line", "scatter", "plot", "chart", "graph"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["axis_count", "numeric_count"],
+      "required_context_bonus": 0.18,
+      "paired_terms_any": [["x-axis", "y-axis"], ["legend", "series"], ["bar", "chart"], ["line", "graph"]],
+      "pair_bonus": 0.14,
+      "negative_terms": ["close-up", "lesion", "field photo", "tutorial"],
+      "negative_penalty_scale": 0.35
+    },
+    "visual_summary_composition": {
+      "signal_strength": "Strong",
+      "text_terms": ["key message", "tip", "fact", "summary", "did you know", "steps", "icons", "highlights", "infographic"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["callout_count"],
+      "required_context_bonus": 0.16,
+      "paired_terms_any": [["key", "message"], ["did you know", "fact"], ["summary", "highlights"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["x-axis", "y-axis", "lesion", "wkt"],
+      "negative_penalty_scale": 0.3
+    },
+    "abstract_explanatory_rendering": {
+      "signal_strength": "Strong",
+      "text_terms": ["component", "process", "system", "input", "output", "arrow", "flow", "structure", "schematic", "diagram"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["component_count"],
+      "required_context_bonus": 0.16,
+      "paired_terms_any": [["input", "output"], ["process", "flow"], ["system", "component"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["close-up", "disease", "bar chart", "latitude"],
+      "negative_penalty_scale": 0.3
+    },
+    "geospatial_reference_structure": {
+      "signal_strength": "Strong",
+      "text_terms": ["north", "south", "east", "west", "latitude", "longitude", "lat", "lon", "scale", "legend", "map", "parcel", "region", "soil map", "geospatial"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["orientation_count"],
+      "required_context_bonus": 0.18,
+      "paired_terms_any": [["latitude", "longitude"], ["map", "legend"], ["scale", "north"]],
+      "pair_bonus": 0.14,
+      "negative_terms": ["quiz", "tutorial", "lesion", "x-axis", "y-axis"],
+      "negative_penalty_scale": 0.3
+    },
+    "field_observation_context": {
+      "signal_strength": "Strong",
+      "text_terms": ["field", "crop", "animal", "farm", "plot", "soil", "grazing", "orchard", "pasture", "in situ", "observational"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["field_count"],
+      "required_context_bonus": 0.14,
+      "paired_terms_any": [["field", "crop"], ["farm", "plot"], ["animal", "pasture"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["x-axis", "legend", "quiz", "close-up lesion"],
+      "negative_penalty_scale": 0.25
+    },
+    "diagnostic_detail_salience": {
+      "signal_strength": "Strong",
+      "text_terms": ["symptom", "lesion", "disease", "damage", "defect", "inspection", "close-up", "spot", "blight", "mildew", "rust"],
+      "per_hit_weight": 0.12,
+      "required_context_keys_any": ["diagnostic_count"],
+      "required_context_bonus": 0.18,
+      "paired_terms_any": [["close-up", "symptom"], ["disease", "lesion"], ["damage", "inspection"]],
+      "pair_bonus": 0.14,
+      "negative_terms": ["x-axis", "latitude", "dashboard", "workflow"],
+      "negative_penalty_scale": 0.3
+    },
+    "equipment_infrastructure_presence": {
+      "signal_strength": "Partial",
+      "text_terms": ["machine", "equipment", "tractor", "implement", "irrigation", "control unit", "sensor", "device", "installation", "infrastructure"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["equipment_count"],
+      "required_context_bonus": 0.14,
+      "paired_terms_any": [["tractor", "implement"], ["irrigation", "control"], ["sensor", "device"]],
+      "pair_bonus": 0.10,
+      "negative_terms": ["x-axis", "lesion", "quiz"],
+      "negative_penalty_scale": 0.25
+    },
+    "remote_sensing_signature": {
+      "signal_strength": "Partial",
+      "text_terms": ["ndvi", "satellite", "drone", "remote sensing", "thermal", "multispectral", "aerial", "false colour", "orthomosaic"],
+      "per_hit_weight": 0.10,
+      "required_context_keys_any": ["remote_count"],
+      "required_context_bonus": 0.14,
+      "paired_terms_any": [["satellite", "ndvi"], ["drone", "aerial"], ["thermal", "multispectral"]],
+      "pair_bonus": 0.12,
+      "negative_terms": ["quiz", "workflow", "step 1"],
+      "negative_penalty_scale": 0.2
+    }
+  },
+  "broad_fallback_rule": {
+    "broad_subcategory_id": "photographs_and_field_images",
+    "specific_subcategory_ids": [
+      "charts_and_data_visualisations",
+      "infographics_and_visual_summaries",
+      "diagrams_and_schematics",
+      "maps_and_geospatial_content",
+      "diagnostic_and_inspection_images"
+    ],
+    "min_specific_score": 0.4,
+    "margin_below_specific": 0.02
+  }
+}
