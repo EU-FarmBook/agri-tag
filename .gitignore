@@ -1,0 +1,295 @@
+# =============================================================================
+# STALE / RETIRED ASSETS (kept locally for reference, excluded from the repo)
+# =============================================================================
+stale/
+
+# =============================================================================
+# PYTHON
+# =============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff
+instance/
+.webassets-cache
+
+# Scrapy stuff
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.env.local
+.env.*.local
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# =============================================================================
+# PROJECT SPECIFIC - DO NOT COMMIT
+# =============================================================================
+
+# Environment variables and secrets
+!.env.sample
+!.env.sample
+
+# JSON data files (often contain sensitive data or are large)
+*.json
+*.csv
+*.xlsx
+*.tsv
+*.mp4
+*.jsonl
+*.npz
+
+# data_model: commit all runtime artifacts and build inputs/outputs; keep only
+# the large, regenerable AGROVOC exports out of the repo.
+# (re-include data_model/build first: the generic `build/` rule above excludes
+#  it, and files cannot be re-included while their parent dir stays excluded.)
+!data_model/build/
+!data_model/**/*.json
+!data_model/**/*.jsonl
+!data_model/runtime/**/*.npz
+data_model/build/agriculture/agrovoc_full_export.jsonl
+data_model/build/agriculture/agrovoc_full_export.checkpoint.json
+
+!schema*.json
+!package.json
+!package-lock.json
+
+# PDF documents (sensitive content, binary files)
+*.pdf
+!files/README.md
+
+# Data directories
+data/
+datasets/
+output/
+results/
+
+# Model weights and large binaries
+*.bin
+*.pt
+*.pth
+*.h5
+*.onnx
+*.safetensors
+*.ckpt
+models/
+weights/
+checkpoints/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs
+logs/
+*.log
+log/
+
+# =============================================================================
+# NODE / FRONTEND (if applicable)
+# =============================================================================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# =============================================================================
+# DOCKER
+# =============================================================================
+
+Dockerfile.*
+docker-compose.*.yml
+
+# =============================================================================
+# MISCELLANEOUS
+# =============================================================================
+
+# Local development scripts
+*.local.sh
+*.local.py
+
+# Backup files
+*.bak
+*.backup
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Redis
+dump.rdb
+
+# Elasticsearch
+*.es
+
+# MinIO / S3 local storage
+.minio.sys/
+
+.env.sample
+
+.env.sample
