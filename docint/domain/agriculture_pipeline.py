@@ -37,6 +37,9 @@ class AgriculturePipelineResult:
     rationale: str
     stages_used: List[str]
     stage_results: List[AgricultureStageResult]
+    # True when stages 1-2 were inconclusive and the Stage-3 LLM was *deferred*
+    # (defer_llm=True) so the caller can make a single combined agri+subtype call.
+    needs_llm_decision: bool = False
 
 
 AGRI_EMBEDDING_MODEL = os.getenv("AGRI_EMBEDDING_MODEL", "intfloat/multilingual-e5-small").strip()
@@ -181,12 +184,18 @@ def assess_agriculture_relevance_staged(
     lines: List[str] | None = None,
     allow_llm_fallback: bool = False,
     llm_config: Optional[Dict[str, str]] = None,
+    defer_llm: bool = False,
 ) -> AgriculturePipelineResult:
     """
     Three-stage agriculture pipeline:
     1. AGROVOC-style multilingual lexicon matcher
     2. small local multilingual embedding model for ambiguous cases
     3. optional text LLM fallback only when still uncertain
+
+    When ``defer_llm`` is True, Stage 3 is *not* called even if it would have
+    fired; instead the result is flagged ``needs_llm_decision=True`` with the
+    provisional Stage 1-2 verdict, so the caller can resolve it with a single
+    combined agriculture+subtype LLM call (avoiding a second round-trip).
     """
     lex = assess_agriculture_relevance(text, lines=lines)
     stage_results: List[AgricultureStageResult] = [
@@ -251,7 +260,11 @@ def assess_agriculture_relevance_staged(
             )
 
     still_ambiguous = 0.3 <= final_confidence <= 0.7 or (final_confidence < 0.3 and substantive_text)
-    if still_ambiguous and allow_llm_fallback and AGRI_ENABLE_LLM_FALLBACK and llm_config:
+    needs_llm_decision = False
+    if still_ambiguous and allow_llm_fallback and AGRI_ENABLE_LLM_FALLBACK and llm_config and defer_llm:
+        # Defer Stage 3: the caller will run one combined agri+subtype LLM call.
+        needs_llm_decision = True
+    elif still_ambiguous and allow_llm_fallback and AGRI_ENABLE_LLM_FALLBACK and llm_config:
         try:
             from docint.llm.agriculture_classify import llm_classify_agriculture_text
 
@@ -303,4 +316,5 @@ def assess_agriculture_relevance_staged(
         rationale=final_rationale,
         stages_used=stages_used,
         stage_results=stage_results,
+        needs_llm_decision=needs_llm_decision,
     )

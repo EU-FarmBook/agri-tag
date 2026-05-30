@@ -7,6 +7,7 @@ Supports both text models (Qwen) and vision models (InternVL).
 from __future__ import annotations
 
 import json
+import math
 import os
 import base64
 import re
@@ -374,6 +375,60 @@ def llm_classify_subcategories_text(
     )
 
 
+def llm_classify_document_with_agriculture(
+    text: str,
+    *,
+    base_url: str,
+    api_key: str,
+    model: str,
+    max_chars: int = 15000,
+    temperature: float = 0.2,
+    timeout: float = 60.0,
+) -> SubcategoryLlmResult:
+    """One LLM call that returns BOTH an agriculture verdict and the document subcategory.
+
+    Used to merge the Stage-3 agriculture-relevance check and the document subtype
+    classification into a single round-trip for ambiguous-agriculture documents.
+    The agriculture verdict is stashed in ``raw_json`` as ``is_agriculture_related``
+    and ``agriculture_confidence``.
+    """
+    client = OpenAI(base_url=base_url, api_key=api_key, timeout=timeout)
+
+    if len(text) > max_chars:
+        head_len = int(max_chars * 0.7)
+        tail_len = int(max_chars * 0.3)
+        text = text[:head_len] + "\n\n[...TRUNCATED...]\n\n" + text[-tail_len:]
+
+    system = _build_unified_category_prompt("Document", include_agriculture_gate=True)
+    schema = _build_unified_schema("Document", include_agriculture_gate=True)
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": schema + "\n\nDOCUMENT TEXT:\n" + text},
+    ]
+
+    resp = client.chat.completions.create(model=model, messages=messages, temperature=temperature)
+    raw = resp.choices[0].message.content or ""
+    data = _parse_llm_json_response(raw, label="document+agriculture LLM")
+
+    subcat_key = data.get("subcategory", "")
+    if subcat_key not in DOCUMENT_UNIFIED_KEYS:
+        probs = data.get("probs", {})
+        subcat_key = max(probs.items(), key=lambda x: x[1])[0] if probs else DOCUMENT_UNIFIED_KEYS[0]
+
+    subcat_def = load_unified_subtypes()[subcat_key]
+    probs = normalize_subcategory_probs(data.get("probs", {}))
+
+    return SubcategoryLlmResult(
+        subcategory_key=subcat_key,
+        subcategory_name=subcat_def.name,
+        parent_type="unified",
+        confidence=float(data.get("confidence", probs.get(subcat_key, 0))),
+        rationale=str(data.get("rationale", "")).strip(),
+        probs=probs,
+        raw_json={**data, "combined_agriculture_gate": True},
+    )
+
+
 def llm_classify_dataset_subcategories_text(
     text: str,
     *,
@@ -677,10 +732,11 @@ def llm_classify_subcategories_vision_batch(
     model: str,
     temperature: float = 0.2,
     timeout: float = 120.0,
+    dpi: int = 150,
 ) -> SubcategoryLlmResult:
     """
     Classify specific pages of a PDF using vision-language model.
-    
+
     Args:
         pdf_path: Path to PDF file
         page_numbers: List of page numbers to analyze (1-indexed)
@@ -689,7 +745,8 @@ def llm_classify_subcategories_vision_batch(
         model: VLM model name
         temperature: Sampling temperature
         timeout: Request timeout
-    
+        dpi: Raster DPI for page-to-image conversion
+
     Returns:
         SubcategoryLlmResult with classification
     """
@@ -697,16 +754,17 @@ def llm_classify_subcategories_vision_batch(
         from pdf2image import convert_from_path
     except ImportError:
         raise ImportError("pdf2image required for vision classification. Install: pip install pdf2image")
-    
-    # Convert specific pages to images
-    images = convert_from_path(pdf_path, first_page=min(page_numbers), last_page=max(page_numbers))
-    
-    # Map images to page numbers
+
+    # Render ONLY the sampled pages. Rendering page-by-page avoids rasterising
+    # the entire span between the first and last sampled page (e.g. pages 1..100
+    # for an 8-page sample), which previously made vision cost scale with
+    # document length instead of with the number of pages actually used.
     page_images = {}
-    for i, page_num in enumerate(range(min(page_numbers), max(page_numbers) + 1)):
-        if page_num in page_numbers and i < len(images):
-            page_images[page_num] = images[i]
-    
+    for page_num in sorted(set(page_numbers)):
+        rendered = convert_from_path(pdf_path, first_page=page_num, last_page=page_num, dpi=dpi)
+        if rendered:
+            page_images[page_num] = rendered[0]
+
     if not page_images:
         raise ValueError("Could not convert PDF pages to images")
     
@@ -773,30 +831,52 @@ def llm_classify_subcategories_vision_batch(
     )
 
 
+def _vision_page_budget(total_pages: int, max_total_pages: int) -> int:
+    """Pick how many pages to send to the vision model for a document.
+
+    The budget is *length-adaptive*: short documents are covered in full, long
+    documents get a sub-linear number of stratified pages. This reflects the
+    literature on document-genre classification, where the discriminative
+    signal (title page, abstract, layout, references) is front/back-loaded and
+    does not require reading every interior page. See README.md for the full
+    rationale and references. The budget is clamped to ``max_total_pages`` so
+    callers retain a hard ceiling on vision cost/latency.
+    """
+    if total_pages <= 0:
+        return 1
+    ceiling = max(1, max_total_pages)
+    if total_pages <= ceiling:
+        return total_pages
+    # Sub-linear growth: ~1 page per 8 pages of document, never below 6.
+    adaptive = max(6, math.ceil(total_pages / 8))
+    return min(ceiling, adaptive)
+
+
 def _sample_vision_pages(total_pages: int, max_total_pages: int) -> List[int]:
-    """Deterministically sample representative pages from the document."""
-    pages_to_process = min(total_pages, max_total_pages)
-    if pages_to_process <= 3:
-        return list(range(1, pages_to_process + 1))
+    """Deterministically sample representative pages across the whole document.
 
-    if pages_to_process <= 6:
-        return sorted(set([1, 2, pages_to_process // 2 or 1, pages_to_process - 1, pages_to_process]))
-
-    sample_size = min(8, pages_to_process)
-    if sample_size <= 1:
+    Pages are picked at evenly spaced fractional positions so the first and last
+    page are always included and the remainder are stratified across the body.
+    Unlike a naive ``range(1, n)``, this samples across ``total_pages`` (not just
+    the first N pages), so the vision model actually sees the middle and end of
+    long documents.
+    """
+    if total_pages <= 0:
         return [1]
 
-    positions = [0.0, 0.12, 0.28, 0.5, 0.72, 0.88, 1.0]
-    if sample_size < len(positions):
-        positions = positions[:sample_size]
-        positions[-1] = 1.0
+    budget = _vision_page_budget(total_pages, max_total_pages)
+    if budget >= total_pages:
+        return list(range(1, total_pages + 1))
+    if budget <= 1:
+        return [1]
 
-    sampled_pages = []
-    for pos in positions:
-        idx = round((pages_to_process - 1) * pos)
-        sampled_pages.append(idx + 1)
+    sampled = set()
+    for i in range(budget):
+        pos = i / (budget - 1)  # 0.0 .. 1.0 inclusive of first and last page
+        idx = round((total_pages - 1) * pos)
+        sampled.add(idx + 1)
 
-    return sorted(set(max(1, min(pages_to_process, p)) for p in sampled_pages))
+    return sorted(max(1, min(total_pages, p)) for p in sampled)
 
 
 def llm_classify_subcategories_vision_sampled(
@@ -805,25 +885,29 @@ def llm_classify_subcategories_vision_sampled(
     base_url: str,
     api_key: str,
     model: str,
-    max_total_pages: int = 8,
+    max_total_pages: int = 16,
     temperature: float = 0.2,
+    dpi: int = 150,
 ) -> SubcategoryLlmResult:
     """
     Classify PDF using vision model on deterministic sampled pages.
-    
+
     Args:
         pdf_path: Path to PDF file
         base_url: VLM endpoint
         api_key: API key
         model: VLM model name
-        max_total_pages: Maximum sampled pages to process
+        max_total_pages: Hard ceiling on sampled pages; the actual count is
+            chosen length-adaptively up to this ceiling (see _vision_page_budget)
         temperature: Sampling temperature
-    
+        dpi: Raster DPI for page-to-image conversion (150-200 is the practical
+            sweet spot for VLM document understanding; see README.md)
+
     Returns:
         SubcategoryLlmResult from sampled pages
     """
     from PyPDF2 import PdfReader
-    
+
     reader = PdfReader(pdf_path)
     total_pages = len(reader.pages)
     page_numbers = _sample_vision_pages(total_pages, max_total_pages)
@@ -834,12 +918,15 @@ def llm_classify_subcategories_vision_sampled(
         api_key=api_key,
         model=model,
         temperature=temperature,
+        dpi=dpi,
     )
     result.raw_json = {
         **result.raw_json,
         "vision_sampling": "deterministic_stratified",
         "total_pages_in_document": total_pages,
         "sampled_page_count": len(page_numbers),
+        "sampled_pages": page_numbers,
+        "render_dpi": dpi,
     }
     return result
 

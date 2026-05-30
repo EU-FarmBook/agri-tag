@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Alternative Python-based startup script for the KO Classifier API.
+Alternative Python-based startup script for the Agri-Tag API.
 """
 
 import os
@@ -36,7 +36,7 @@ def load_env_file():
 def main():
     """Main entry point."""
     print("=" * 60)
-    print("KO Classifier API Server")
+    print("Agri-Tag API Server")
     print("=" * 60)
     
     # Load .env file

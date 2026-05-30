@@ -1,5 +1,5 @@
 #!/bin/bash
-# Start the KO Classifier API server
+# Start the Agri-Tag API server
 
 set -e
 
@@ -9,7 +9,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}Starting KO Classifier API...${NC}"
+echo -e "${GREEN}Starting Agri-Tag API...${NC}"
 
 # Check if virtual environment exists
 if [ -d ".venv" ]; then

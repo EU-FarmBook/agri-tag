@@ -52,7 +52,7 @@ EMB_WEIGHT = float(os.getenv("TOPIC_EMB_WEIGHT", "0.45"))
 # A topic is emitted when its final score clears this bar.
 TOPIC_SELECT_THRESHOLD = float(os.getenv("TOPIC_SELECT_THRESHOLD", "0.45"))
 # Cap on returned topics and on matched terms surfaced per topic.
-TOPIC_MAX_SELECTED = int(os.getenv("TOPIC_MAX_SELECTED", "4"))
+TOPIC_MAX_SELECTED = int(os.getenv("TOPIC_MAX_SELECTED", "3"))
 TOPIC_MAX_TERMS = int(os.getenv("TOPIC_MAX_TERMS", "6"))
 
 

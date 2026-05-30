@@ -1,6 +1,6 @@
 # Image Identification And Validation Logic
 
-This document describes the current image-classification logic in the KO classifier.
+This document describes the current image-classification logic in the Agri-Tag.
 
 The image branch now follows the same pattern as dataset, software, and document:
 

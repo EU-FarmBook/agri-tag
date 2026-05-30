@@ -1,6 +1,6 @@
 # Video Identification And Validation Logic
 
-This document describes the current video-classification logic in the KO classifier.
+This document describes the current video-classification logic in the Agri-Tag.
 
 The video branch now follows the same pattern as the other calibrated modalities:
 

@@ -1,6 +1,7 @@
 fastapi==0.136.3
 httpx==0.28.1
 langdetect==1.0.9
+mistralai==1.12.4
 openai==2.38.0
 openpyxl==3.1.5
 numpy==2.4.6

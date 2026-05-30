@@ -1,6 +1,6 @@
 # app.py
 """
-KO Classifier API - FastAPI application for KO category and subtype classification.
+Agri-Tag API - FastAPI application for KO category and subtype classification.
 
 This API provides evidence-based KO classification with optional LLM enhancement.
 It supports text-based, vision-based, and category-specific hybrid routing with intelligent
@@ -18,6 +18,7 @@ import re
 import time
 import hashlib
 import sys
+from enum import Enum
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
@@ -39,6 +40,18 @@ except Exception:
     LANGDETECT_AVAILABLE = False
 
 from docint.audio.transcribe import transcribe_audio_file
+from docint.providers.mistral_provider import (
+    MISTRAL_CONFIGURED,
+    MISTRAL_OPENAI_BASE_URL,
+    MISTRAL_API_KEY,
+    MISTRAL_TEXT_MODEL,
+    MISTRAL_VISION_MODEL,
+    MISTRAL_OCR_MODEL,
+    MISTRAL_AUDIO_MODEL,
+    mistral_ocr_pdf,
+    mistral_ocr_image,
+    mistral_transcribe,
+)
 from docint.security.upload_security import (
     get_archive_suffix,
     get_blocked_suffix,
@@ -49,6 +62,7 @@ from docint.extract.quality import text_quality_ok
 from docint.extract.ocr import ocr_pdf, ocr_image
 from docint.category.infer import infer_category, infer_file_category, infer_url_category
 from docint.topics.infer import infer_topics
+from docint.purposes.infer import infer_intended_purposes
 from docint.ingest.dispatcher import ingest_asset, SUPPORTED_DOCUMENT_EXTENSIONS
 from docint.ingest.unit_limits import inspect_document_units
 from docint.video.extract import media_duration_seconds, sample_video_frames, transcribe_video_audio
@@ -138,6 +152,18 @@ MAX_VIDEO_UPLOAD_SIZE_MB = int(os.getenv("MAX_VIDEO_UPLOAD_SIZE_MB", "1024"))
 MAX_OTHER_UPLOAD_SIZE_MB = int(os.getenv("MAX_OTHER_UPLOAD_SIZE_MB", "50"))
 MAX_REQUEST_BODY_MB = int(os.getenv("MAX_REQUEST_BODY_MB", str(max(MAX_AUDIO_UPLOAD_SIZE_MB, MAX_VIDEO_UPLOAD_SIZE_MB))))
 MAX_DOCUMENT_UNITS = int(os.getenv("MAX_DOCUMENT_UNITS", "100"))
+# Raw-text endpoint cap: ~10 A4 pages * ~500 words = 5000 words.
+MAX_TEXT_INPUT_WORDS = int(os.getenv("MAX_TEXT_INPUT_WORDS", "5000"))
+VISION_RENDER_DPI = int(os.getenv("VISION_RENDER_DPI", "150"))
+# Surface at most 2 subcategory candidates (always the best; a second only when it
+# is a genuinely close contender within SUBCATEGORY_SECOND_GAP probability).
+SUBCATEGORY_MAX_CANDIDATES = int(os.getenv("SUBCATEGORY_MAX_CANDIDATES", "2"))
+SUBCATEGORY_SECOND_GAP = float(os.getenv("SUBCATEGORY_SECOND_GAP", "0.15"))
+# EXPERIMENTAL: for ambiguous-agriculture *documents*, replace the separate
+# Stage-3 agriculture LLM call + the document subtype LLM call with ONE combined
+# call. Off by default; validate agriculture-gate accuracy on an eval set before
+# enabling in production.
+MERGE_AGRI_SUBCATEGORY_LLM = os.getenv("MERGE_AGRI_SUBCATEGORY_LLM", "false").strip().lower() in {"1", "true", "yes"}
 AGRI_GATE_BASE_URL = os.getenv("AGRI_GATE_BASE_URL", "").rstrip("/")
 AGRI_GATE_TIMEOUT = float(os.getenv("AGRI_GATE_TIMEOUT", "60"))
 AGRI_GATE_URL_STRICT = os.getenv("AGRI_GATE_URL_STRICT", "true").lower() == "true"
@@ -180,6 +206,44 @@ AUTH_ENABLED = bool(AUTHORIZED_USERS)
 PAGESENSE_CACHE: Dict[str, tuple[float, Any, int]] = {}
 AGRICULTURE_CACHE: Dict[str, tuple[float, Any, int]] = {}
 
+# Supported LLM providers for the classification flow.
+#   "custom" -> the self-hosted OpenAI-compatible Qwen/InternVL flow (default)
+#   "mistral" -> route chat (text+vision) at Mistral's OpenAI-compatible endpoint,
+#                and OCR/transcription through the native Mistral adapters.
+# Declared as a str-Enum so FastAPI renders a dropdown for the `provider` query
+# parameter in the Swagger UI (/docs) and validates the value automatically.
+class ProviderChoice(str, Enum):
+    custom = "custom"
+    mistral = "mistral"
+
+
+PROVIDER_CHOICES = tuple(choice.value for choice in ProviderChoice)
+
+
+def _resolve_llm_config(provider: str):
+    """Return provider-aware (text + vision) LLM config.
+
+    The tuple is unpacked into local names that *shadow* the module-level
+    ``LLM_*`` / ``VISION_LLM_*`` globals inside a request handler, so the existing
+    classification call sites and gating conditions work unchanged for both
+    providers. Mistral chat is OpenAI-compatible, so only the endpoint/key/model
+    differ here; OCR and transcription are routed separately at their call sites.
+
+    Order: (text_base_url, text_api_key, text_model, text_configured,
+            vision_base_url, vision_api_key, vision_model, vision_configured)
+    """
+    g = globals()
+    if provider == "mistral":
+        base = MISTRAL_OPENAI_BASE_URL if MISTRAL_CONFIGURED else ""
+        return (
+            base, MISTRAL_API_KEY, MISTRAL_TEXT_MODEL, MISTRAL_CONFIGURED,
+            base, MISTRAL_API_KEY, MISTRAL_VISION_MODEL, MISTRAL_CONFIGURED,
+        )
+    return (
+        g["LLM_BASE_URL"], g["LLM_API_KEY"], g["LLM_MODEL"], g["LLM_CONFIGURED"],
+        g["VISION_LLM_BASE_URL"], g["VISION_LLM_API_KEY"], g["VISION_LLM_MODEL"], bool(g["VISION_LLM_BASE_URL"]),
+    )
+
 
 def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
     """
@@ -205,7 +269,7 @@ def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password",
-            headers={"WWW-Authenticate": 'Basic realm="KO Classifier API"'},
+            headers={"WWW-Authenticate": 'Basic realm="Agri-Tag API"'},
         )
     
     # Verify password using constant-time comparison
@@ -213,7 +277,7 @@ def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password",
-            headers={"WWW-Authenticate": 'Basic realm="KO Classifier API"'},
+            headers={"WWW-Authenticate": 'Basic realm="Agri-Tag API"'},
         )
     
     return credentials.username
@@ -306,6 +370,24 @@ class TopicInference(BaseModel):
     rationale: str = ""
 
 
+class IntendedPurposeResult(BaseModel):
+    """A single inferred user-intent / intended purpose."""
+    key: str
+    name: str
+    category: str = ""
+    score: float = Field(..., ge=0.0, le=1.0)
+    rationale: str = ""
+
+
+class IntendedPurposeInference(BaseModel):
+    """Multi-label intended-purpose assignment (orthogonal to category and topics; capped at 3)."""
+    purposes: List[IntendedPurposeResult] = []
+    method: str = "none"
+    stages_used: List[str] = []
+    version: str = "intended_purpose_v1"
+    rationale: str = ""
+
+
 class CategoryInference(BaseModel):
     """Inferred high-level category for the uploaded asset."""
     category: str
@@ -330,6 +412,7 @@ class ClassificationResponse(BaseModel):
     category_inference: Optional[CategoryInference] = None
     agriculture_relevance: AgricultureRelevance
     topics: Optional[TopicInference] = None
+    intended_purposes: Optional[IntendedPurposeInference] = None
     classification_skipped: bool = False
     skip_reason: Optional[str] = None
     
@@ -342,6 +425,11 @@ class ClassificationResponse(BaseModel):
 
 class UrlClassificationRequest(BaseModel):
     url: str = Field(..., description="Public http/https URL to classify")
+
+
+class TextClassificationRequest(BaseModel):
+    text: str = Field(..., description="Raw text to classify (up to ~10 A4 pages / 5000 words)")
+    filename: Optional[str] = Field(None, description="Optional label for the snippet; informational only")
 
 
 class MediaLlmTranscriptInfo(BaseModel):
@@ -372,7 +460,7 @@ class MediaLlmOnlyResponse(BaseModel):
 # =============================================================================
 
 app = FastAPI(
-    title="KO Classifier API",
+    title="Agri-Tag API",
     description="""
     Agriculture-gated KO classification with explainable category-specific subtype scoring for files and URLs.
     
@@ -717,7 +805,15 @@ def _prepare_response(
     if debug:
         return prepared
 
-    prepared.all_candidates = [_compact_candidate(c) for c in prepared.all_candidates[:top_k_candidates]]
+    # Surface 1 subcategory, or at most 2 when the runner-up is a close contender.
+    effective_k = min(top_k_candidates, SUBCATEGORY_MAX_CANDIDATES)
+    surfaced = prepared.all_candidates[:effective_k]
+    if (
+        len(surfaced) >= 2
+        and (surfaced[0].probability - surfaced[1].probability) > SUBCATEGORY_SECOND_GAP
+    ):
+        surfaced = surfaced[:1]
+    prepared.all_candidates = [_compact_candidate(c) for c in surfaced]
     prepared.best_match = _compact_candidate(prepared.best_match) if prepared.best_match else None
     prepared.heuristics = _compact_candidate(prepared.heuristics) if prepared.heuristics else None
     prepared.vision_llm = _compact_model_payload(prepared.vision_llm)
@@ -1012,10 +1108,10 @@ def _sample_text_for_llm(text: str, *, max_chars: int) -> str:
     return "\n\n[...]\n\n".join([part for part in parts if part])
 
 
-def _agriculture_cache_key(text: str, *, allow_llm_fallback: bool) -> str:
+def _agriculture_cache_key(text: str, *, allow_llm_fallback: bool, llm_configured: bool, llm_model: str) -> str:
     normalized = " ".join((text or "").split())
     digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-    return f"{digest}|llm={int(bool(allow_llm_fallback and LLM_CONFIGURED))}|model={LLM_MODEL}"
+    return f"{digest}|llm={int(bool(allow_llm_fallback and llm_configured))}|model={llm_model}"
 
 
 def _assess_agriculture_cached(
@@ -1023,8 +1119,19 @@ def _assess_agriculture_cached(
     text: str,
     lines: List[str],
     allow_llm_fallback: bool,
+    llm_base_url: str = "",
+    llm_api_key: str = "",
+    llm_model: str = "",
+    llm_configured: bool = False,
+    defer_llm: bool = False,
 ):
-    cache_key = _agriculture_cache_key(text, allow_llm_fallback=allow_llm_fallback)
+    # The Stage-3 agriculture LLM uses the *same* provider selected for the request
+    # (custom or mistral), so under provider=mistral it no longer falls back to the
+    # self-hosted endpoint. The model is part of the cache key so the two providers
+    # do not share cached agriculture decisions.
+    cache_key = _agriculture_cache_key(
+        text, allow_llm_fallback=allow_llm_fallback, llm_configured=llm_configured, llm_model=llm_model
+    )
     cached = _cache_get(AGRICULTURE_CACHE, cache_key)
     if cached is not None:
         return cached, True
@@ -1034,12 +1141,16 @@ def _assess_agriculture_cached(
         lines=lines,
         allow_llm_fallback=allow_llm_fallback,
         llm_config={
-            "base_url": LLM_BASE_URL,
-            "api_key": LLM_API_KEY,
-            "model": LLM_MODEL,
-        } if allow_llm_fallback and LLM_CONFIGURED else None,
+            "base_url": llm_base_url,
+            "api_key": llm_api_key,
+            "model": llm_model,
+        } if allow_llm_fallback and llm_configured else None,
+        defer_llm=defer_llm,
     )
-    _cache_set(AGRICULTURE_CACHE, cache_key, result, AGRICULTURE_CACHE_TTL_SEC)
+    # Do not cache a provisional (deferred) verdict; the caller finalises it via the
+    # combined agri+subtype call and caches the resolved result.
+    if not getattr(result, "needs_llm_decision", False):
+        _cache_set(AGRICULTURE_CACHE, cache_key, result, AGRICULTURE_CACHE_TTL_SEC)
     return result, False
 
 
@@ -1047,6 +1158,10 @@ def _assess_ko_eligibility(
     *,
     text: str,
     use_text_llm: bool,
+    llm_base_url: str = "",
+    llm_api_key: str = "",
+    llm_model: str = "",
+    llm_configured: bool = False,
 ) -> Dict[str, Any]:
     heuristic = assess_ko_eligibility(text)
     result = {
@@ -1059,15 +1174,15 @@ def _assess_ko_eligibility(
     }
 
     ambiguous = (not heuristic.is_eligible and heuristic.confidence < 0.8) or (heuristic.is_eligible and heuristic.confidence < 0.6)
-    if ambiguous and use_text_llm and LLM_CONFIGURED:
+    if ambiguous and use_text_llm and llm_configured:
         try:
             from docint.llm.eligibility_classify import llm_classify_ko_eligibility_text
 
             llm_res = llm_classify_ko_eligibility_text(
                 text,
-                base_url=LLM_BASE_URL,
-                api_key=LLM_API_KEY,
-                model=LLM_MODEL,
+                base_url=llm_base_url,
+                api_key=llm_api_key,
+                model=llm_model,
             )
             result = {
                 "is_eligible": llm_res.is_eligible,
@@ -1241,6 +1356,42 @@ def _infer_topics_response(
     )
 
 
+def _infer_intended_purposes_response(
+    *,
+    text: str,
+    agri_relevance: Any,
+    use_text_llm: bool,
+    llm_base_url: str,
+    llm_api_key: str,
+    llm_model: str,
+    llm_configured: bool,
+) -> Optional[IntendedPurposeInference]:
+    """Infer up to 3 intended purposes (user intents). Never raises.
+
+    The LLM stage is used only when the text LLM is enabled, configured, and the
+    asset is agriculture-related (so a doc about to be skipped does not pay for an
+    LLM call); otherwise it falls back to the always-on embedding stage.
+    """
+    if not text or len(text.strip()) < TOPIC_MIN_CHARS:
+        return None
+    use_llm = bool(use_text_llm and llm_configured and getattr(agri_relevance, "is_agriculture_related", False))
+    llm_config = {"base_url": llm_base_url, "api_key": llm_api_key, "model": llm_model} if use_llm else None
+    try:
+        result = infer_intended_purposes(text, max_results=3, use_llm=use_llm, llm_config=llm_config)
+    except Exception as exc:
+        return IntendedPurposeInference(purposes=[], method="error", stages_used=[], rationale=f"Intended-purpose inference unavailable: {exc}")
+    return IntendedPurposeInference(
+        purposes=[
+            IntendedPurposeResult(key=p.key, name=p.name, category=p.category, score=p.score, rationale=p.rationale)
+            for p in result.purposes
+        ],
+        method=result.method,
+        stages_used=result.stages_used,
+        version=result.version,
+        rationale=result.rationale,
+    )
+
+
 def classify_url_text(
     *,
     url: str,
@@ -1253,7 +1404,12 @@ def classify_url_text(
     heuristics_alpha: float = 0.4,
     classification_confidence_threshold: float = 0.35,
     fusion_strategy: str = "adaptive",
+    provider: str = "custom",
 ) -> ClassificationResponse:
+    # Provider-aware text-LLM config (URL path is text-only; no OCR/vision/audio).
+    (LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, LLM_CONFIGURED,
+     VISION_LLM_BASE_URL, VISION_LLM_API_KEY, VISION_LLM_MODEL, _vision_configured) = _resolve_llm_config(provider)
+
     start_time = time.time()
     stage_timings_ms: Dict[str, float] = {}
     text = extracted_text.strip()
@@ -1279,6 +1435,10 @@ def classify_url_text(
         text=text,
         lines=lines,
         allow_llm_fallback=use_text_llm and LLM_CONFIGURED,
+        llm_base_url=LLM_BASE_URL,
+        llm_api_key=LLM_API_KEY,
+        llm_model=LLM_MODEL,
+        llm_configured=LLM_CONFIGURED,
     )
     stage_timings_ms["agriculture_pipeline_ms"] = round((time.time() - stage_start) * 1000, 2)
     agriculture_response = AgricultureRelevance(
@@ -1308,6 +1468,17 @@ def classify_url_text(
     )
 
     topics_response = _infer_topics_response(text=text, lines=lines, agri_relevance=agri_relevance)
+    _purpose_start = time.time()
+    intended_purposes_response = _infer_intended_purposes_response(
+        text=text,
+        agri_relevance=agri_relevance,
+        use_text_llm=use_text_llm,
+        llm_base_url=LLM_BASE_URL,
+        llm_api_key=LLM_API_KEY,
+        llm_model=LLM_MODEL,
+        llm_configured=LLM_CONFIGURED,
+    )
+    stage_timings_ms["intended_purposes_ms"] = round((time.time() - _purpose_start) * 1000, 2)
 
     base_document_info = {
         "filename": url,
@@ -1327,7 +1498,14 @@ def classify_url_text(
     }
 
     stage_start = time.time()
-    eligibility_result = _assess_ko_eligibility(text=text, use_text_llm=use_text_llm)
+    eligibility_result = _assess_ko_eligibility(
+        text=text,
+        use_text_llm=use_text_llm,
+        llm_base_url=LLM_BASE_URL,
+        llm_api_key=LLM_API_KEY,
+        llm_model=LLM_MODEL,
+        llm_configured=LLM_CONFIGURED,
+    )
     stage_timings_ms["ko_eligibility_ms"] = round((time.time() - stage_start) * 1000, 2)
     if agri_relevance.is_agriculture_related and not eligibility_result["is_eligible"]:
         processing_time_ms = (time.time() - start_time) * 1000
@@ -1343,6 +1521,7 @@ def classify_url_text(
             category_inference=category_response,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=True,
             skip_reason=f"Agriculture-related but not an eligible knowledge object: {exclusion_label}",
             total_candidates=0,
@@ -1380,6 +1559,7 @@ def classify_url_text(
             category_inference=category_response,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=True,
             skip_reason=f"{category_result.category} URL classified as non-agriculture; subcategory classification skipped",
             total_candidates=0,
@@ -1404,7 +1584,14 @@ def classify_url_text(
         )
 
     stage_start = time.time()
-    eligibility_result = _assess_ko_eligibility(text=text, use_text_llm=use_text_llm)
+    eligibility_result = _assess_ko_eligibility(
+        text=text,
+        use_text_llm=use_text_llm,
+        llm_base_url=LLM_BASE_URL,
+        llm_api_key=LLM_API_KEY,
+        llm_model=LLM_MODEL,
+        llm_configured=LLM_CONFIGURED,
+    )
     stage_timings_ms["ko_eligibility_ms"] = round((time.time() - stage_start) * 1000, 2)
     if not eligibility_result["is_eligible"]:
         processing_time_ms = (time.time() - start_time) * 1000
@@ -1420,6 +1607,7 @@ def classify_url_text(
             category_inference=category_response,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=True,
             skip_reason=f"Agriculture-related but not an eligible knowledge object: {exclusion_label}",
             total_candidates=0,
@@ -1552,6 +1740,7 @@ def classify_url_text(
             category_inference=category_response,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=False,
             skip_reason=None,
             total_candidates=len(software_candidates),
@@ -1700,6 +1889,7 @@ def classify_url_text(
             category_inference=category_response,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=False,
             skip_reason=None,
             total_candidates=len(dataset_candidates),
@@ -1886,6 +2076,7 @@ def classify_url_text(
         category_inference=category_response,
         agriculture_relevance=agriculture_response,
         topics=topics_response,
+        intended_purposes=intended_purposes_response,
         classification_skipped=False,
         skip_reason=None,
         total_candidates=len(final_candidates),
@@ -1929,13 +2120,14 @@ def classify_document(
     vision_trigger_threshold: float = 0.6,
     candidate_gap_threshold: float = 0.12,
     fusion_strategy: str = "adaptive",
-    vision_max_pages: int = 20,
+    vision_max_pages: int = 16,
     ocr_lang: str = ALL_OCR_LANGS,
     ocr_max_pages: int = 10,
+    provider: str = "custom",
 ) -> ClassificationResponse:
     """
     Main classification function with optional LLM fusion.
-    
+
     Args:
         file_path: Path to uploaded file
         filename: Original filename
@@ -1951,15 +2143,24 @@ def classify_document(
         vision_max_pages: Max pages for vision analysis
         ocr_lang: Tesseract OCR languages
         ocr_max_pages: Max pages for OCR fallback
+        provider: LLM provider flow: "custom" (default, self-hosted) or "mistral"
     
     Returns:
         ClassificationResponse with results and fusion info
     """
     import time
-    
+
+    # Provider-aware LLM config. For "mistral" these shadow the module globals so
+    # every chat (text+vision) call site below targets Mistral's OpenAI-compatible
+    # endpoint. OCR and transcription are routed separately (they use the native
+    # Mistral SDK), keyed off `use_mistral`.
+    use_mistral = provider == "mistral"
+    (LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, LLM_CONFIGURED,
+     VISION_LLM_BASE_URL, VISION_LLM_API_KEY, VISION_LLM_MODEL, _vision_configured) = _resolve_llm_config(provider)
+
     start_time = time.time()
     stage_timings_ms: Dict[str, float] = {}
-    
+
     # 1) Extract text from PDF
     stage_start = time.time()
     asset = ingest_asset(file_path, filename)
@@ -1979,9 +2180,13 @@ def classify_document(
     quality = text_quality_ok(asset.text)
     if asset.ocr_supported and not quality.ok:
         if category_result.category == "Image":
-            ocr_doc = ocr_image(file_path, lang=ocr_lang)
+            ocr_doc = mistral_ocr_image(file_path) if use_mistral else ocr_image(file_path, lang=ocr_lang)
         else:
-            ocr_doc = ocr_pdf(file_path, max_pages=ocr_max_pages, lang=ocr_lang)
+            ocr_doc = (
+                mistral_ocr_pdf(file_path, max_pages=ocr_max_pages)
+                if use_mistral
+                else ocr_pdf(file_path, max_pages=ocr_max_pages, lang=ocr_lang)
+            )
         from dataclasses import replace
         asset = replace(
             asset,
@@ -1991,7 +2196,7 @@ def classify_document(
             meta={**asset.meta, **ocr_doc.meta},
         )
     if category_result.category == "Audio":
-        transcript = transcribe_audio_file(file_path)
+        transcript = mistral_transcribe(file_path) if use_mistral else transcribe_audio_file(file_path)
         if transcript.text:
             from dataclasses import replace
             asset = replace(
@@ -2020,7 +2225,7 @@ def classify_document(
             )
         stage_timings_ms["audio_transcription_ms"] = round((time.time() - stage_start) * 1000, 2)
     if category_result.category == "Video":
-        transcript = transcribe_video_audio(file_path)
+        transcript = transcribe_video_audio(file_path, transcriber=mistral_transcribe) if use_mistral else transcribe_video_audio(file_path)
         if transcript.text:
             from dataclasses import replace
             asset = replace(
@@ -2053,11 +2258,74 @@ def classify_document(
     
     # 3) Agriculture gate before the heavier classification pipeline
     stage_start = time.time()
+    # For ambiguous-agriculture documents we can defer the Stage-3 agriculture LLM
+    # and resolve it together with the document subtype in ONE combined call.
+    merge_agri_subtype = (
+        MERGE_AGRI_SUBCATEGORY_LLM
+        and use_text_llm
+        and LLM_CONFIGURED
+        and category_result.category == "Document"
+    )
     agri_relevance, agriculture_cache_hit = _assess_agriculture_cached(
         text=asset.text,
         lines=asset.lines,
         allow_llm_fallback=use_text_llm and LLM_CONFIGURED,
+        llm_base_url=LLM_BASE_URL,
+        llm_api_key=LLM_API_KEY,
+        llm_model=LLM_MODEL,
+        llm_configured=LLM_CONFIGURED,
+        defer_llm=merge_agri_subtype,
     )
+
+    merged_document_text_result = None
+    if merge_agri_subtype and getattr(agri_relevance, "needs_llm_decision", False):
+        from dataclasses import replace
+        try:
+            from docint.llm.subcategory_classify import llm_classify_document_with_agriculture
+
+            combined = llm_classify_document_with_agriculture(
+                asset.text,
+                base_url=LLM_BASE_URL,
+                api_key=LLM_API_KEY,
+                model=LLM_MODEL,
+                max_chars=15000,
+                temperature=0.2,
+            )
+            combined_is_agri = bool(combined.raw_json.get("is_agriculture_related", agri_relevance.is_agriculture_related))
+            try:
+                combined_conf = float(combined.raw_json.get("agriculture_confidence", agri_relevance.confidence))
+            except (TypeError, ValueError):
+                combined_conf = agri_relevance.confidence
+            agri_relevance = replace(
+                agri_relevance,
+                is_agriculture_related=combined_is_agri,
+                confidence=round(combined_conf, 4),
+                score=round(combined_conf, 4),
+                method="combined_agri_subtype_llm",
+                stages_used=list(agri_relevance.stages_used) + ["combined_llm"],
+                needs_llm_decision=False,
+            )
+            # Reuse this subtype result later instead of a second text-LLM call.
+            merged_document_text_result = combined
+            # Cache the finalised agriculture verdict under the same key.
+            _cache_set(
+                AGRICULTURE_CACHE,
+                _agriculture_cache_key(asset.text, allow_llm_fallback=True, llm_configured=LLM_CONFIGURED, llm_model=LLM_MODEL),
+                agri_relevance,
+                AGRICULTURE_CACHE_TTL_SEC,
+            )
+        except Exception:
+            # Fall back to the standard standalone agriculture LLM path.
+            agri_relevance, agriculture_cache_hit = _assess_agriculture_cached(
+                text=asset.text,
+                lines=asset.lines,
+                allow_llm_fallback=use_text_llm and LLM_CONFIGURED,
+                llm_base_url=LLM_BASE_URL,
+                llm_api_key=LLM_API_KEY,
+                llm_model=LLM_MODEL,
+                llm_configured=LLM_CONFIGURED,
+                defer_llm=False,
+            )
     stage_timings_ms["agriculture_pipeline_ms"] = round((time.time() - stage_start) * 1000, 2)
     agriculture_response = AgricultureRelevance(
         is_agriculture_related=agri_relevance.is_agriculture_related,
@@ -2090,6 +2358,17 @@ def classify_document(
         lines=[line.strip() for line in asset.text.splitlines() if line.strip()][:20] or None,
         agri_relevance=agri_relevance,
     )
+    _purpose_start = time.time()
+    intended_purposes_response = _infer_intended_purposes_response(
+        text=asset.text,
+        agri_relevance=agri_relevance,
+        use_text_llm=use_text_llm,
+        llm_base_url=LLM_BASE_URL,
+        llm_api_key=LLM_API_KEY,
+        llm_model=LLM_MODEL,
+        llm_configured=LLM_CONFIGURED,
+    )
+    stage_timings_ms["intended_purposes_ms"] = round((time.time() - _purpose_start) * 1000, 2)
 
     if category_result.category == "Image":
         stage_start = time.time()
@@ -2197,6 +2476,7 @@ def classify_document(
                 category_inference=None,
                 agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
                 classification_skipped=True,
                 skip_reason="Image classified as non-agriculture; image subcategory classification skipped",
                 total_candidates=0,
@@ -2240,6 +2520,7 @@ def classify_document(
             category_inference=None,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=False,
             skip_reason=None,
             total_candidates=len(unified_image_candidates),
@@ -2386,6 +2667,7 @@ def classify_document(
                 category_inference=None,
                 agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
                 classification_skipped=True,
                 skip_reason="Video classified as non-agriculture; video subcategory classification skipped",
                 total_candidates=0,
@@ -2429,6 +2711,7 @@ def classify_document(
                 category_inference=None,
                 agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
                 classification_skipped=True,
                 skip_reason="Video transcript and sampled-frame evidence unavailable; video subtype classification skipped",
                 total_candidates=0,
@@ -2522,6 +2805,7 @@ def classify_document(
             category_inference=None,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=False,
             skip_reason=None,
             total_candidates=len(unified_video_candidates),
@@ -2599,6 +2883,7 @@ def classify_document(
             category_inference=None,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=True,
             skip_reason="Audio transcription unavailable; agriculture and audio subtype classification skipped",
             total_candidates=0,
@@ -2642,6 +2927,7 @@ def classify_document(
             category_inference=None,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=True,
             skip_reason=f"{category_result.category} classified as non-agriculture; subcategory classification skipped",
             total_candidates=0,
@@ -2776,6 +3062,7 @@ def classify_document(
             category_inference=None,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=False,
             skip_reason=None,
             total_candidates=len(unified_audio_candidates),
@@ -2927,6 +3214,7 @@ def classify_document(
             category_inference=None,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=False,
             skip_reason=None,
             total_candidates=len(unified_dataset_candidates),
@@ -3074,6 +3362,7 @@ def classify_document(
             category_inference=None,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=False,
             skip_reason=None,
             total_candidates=len(unified_software_candidates),
@@ -3124,6 +3413,7 @@ def classify_document(
             category_inference=None,
             agriculture_relevance=agriculture_response,
             topics=topics_response,
+            intended_purposes=intended_purposes_response,
             classification_skipped=True,
             skip_reason=f"Inferred category is {category_result.category}; document subcategory classification skipped",
             total_candidates=0,
@@ -3245,11 +3535,32 @@ def classify_document(
         )
     )
 
-    if should_use_text_llm:
+    if merged_document_text_result is not None:
+        # Reuse the combined agriculture+subtype call instead of a second text-LLM
+        # round-trip (the agriculture verdict already came from this same response).
+        llm_res = merged_document_text_result
+        text_source = convert_to_source_result(
+            subcategory_key=llm_res.subcategory_key,
+            confidence=llm_res.confidence,
+            probs=llm_res.probs,
+            source_name="text_llm",
+            rationale=llm_res.rationale,
+        )
+        llm_results["text"] = {
+            "subcategory_key": llm_res.subcategory_key,
+            "subcategory_name": llm_res.subcategory_name,
+            "confidence": round(llm_res.confidence, 4),
+            "rationale": llm_res.rationale,
+            "model": LLM_MODEL,
+            "merged_with_agriculture_gate": True,
+        }
+        routing_info["text_llm"]["used"] = True
+        routing_info["text_llm"]["reason"] = "merged_agriculture_subtype_call"
+    elif should_use_text_llm:
         stage_start = time.time()
         try:
             from docint.llm.subcategory_classify import llm_classify_subcategories_text
-            
+
             llm_res = llm_classify_subcategories_text(
                 asset.text,
                 base_url=LLM_BASE_URL,
@@ -3258,7 +3569,7 @@ def classify_document(
                 max_chars=15000,
                 temperature=0.2,
             )
-            
+
             text_source = convert_to_source_result(
                 subcategory_key=llm_res.subcategory_key,
                 confidence=llm_res.confidence,
@@ -3266,7 +3577,7 @@ def classify_document(
                 source_name="text_llm",
                 rationale=llm_res.rationale,
             )
-            
+
             llm_results["text"] = {
                 "subcategory_key": llm_res.subcategory_key,
                 "subcategory_name": llm_res.subcategory_name,
@@ -3305,8 +3616,9 @@ def classify_document(
                 base_url=VISION_LLM_BASE_URL,
                 api_key=VISION_LLM_API_KEY,
                 model=VISION_LLM_MODEL,
-                max_total_pages=min(vision_max_pages, 8),
+                max_total_pages=vision_max_pages,
                 temperature=0.2,
+                dpi=VISION_RENDER_DPI,
             )
             
             vision_source = convert_to_source_result(
@@ -3416,6 +3728,7 @@ def classify_document(
         category_inference=None,
         agriculture_relevance=agriculture_response,
         topics=topics_response,
+        intended_purposes=intended_purposes_response,
         classification_skipped=False,
         skip_reason=None,
         total_candidates=len(unified_document_candidates),
@@ -3483,7 +3796,7 @@ async def auth_middleware(request, call_next):
     if not auth_header or not auth_header.startswith("Basic "):
         return JSONResponse(
             status_code=401,
-            headers={"WWW-Authenticate": 'Basic realm="KO Classifier API"'},
+            headers={"WWW-Authenticate": 'Basic realm="Agri-Tag API"'},
             content={"detail": "Authentication required"},
         )
     
@@ -3499,7 +3812,7 @@ async def auth_middleware(request, call_next):
         if stored_password is None or not secrets.compare_digest(password, stored_password):
             return JSONResponse(
                 status_code=401,
-                headers={"WWW-Authenticate": 'Basic realm="KO Classifier API"'},
+                headers={"WWW-Authenticate": 'Basic realm="Agri-Tag API"'},
                 content={"detail": "Invalid credentials"},
             )
         
@@ -3509,7 +3822,7 @@ async def auth_middleware(request, call_next):
     except Exception:
         return JSONResponse(
             status_code=401,
-            headers={"WWW-Authenticate": 'Basic realm="KO Classifier API"'},
+            headers={"WWW-Authenticate": 'Basic realm="Agri-Tag API"'},
             content={"detail": "Invalid authentication format"},
         )
     
@@ -3521,7 +3834,7 @@ async def root(request: Request):
     """Root endpoint with API info."""
     username = getattr(request.state, 'username', 'anonymous')
     return {
-        "name": "KO Classifier API",
+        "name": "Agri-Tag API",
         "version": "2.0.0",
         "authenticated_user": username,
         "auth_enabled": AUTH_ENABLED,
@@ -3590,6 +3903,14 @@ async def health(request: Request):
                 "frame_sampling_ready": FFMPEG_AVAILABLE and FFPROBE_AVAILABLE,
                 "audio_extract_ready": FFMPEG_AVAILABLE,
             },
+            "mistral": {
+                "configured": MISTRAL_CONFIGURED,
+                "openai_base_url": MISTRAL_OPENAI_BASE_URL if MISTRAL_CONFIGURED else None,
+                "text_model": MISTRAL_TEXT_MODEL if MISTRAL_CONFIGURED else None,
+                "vision_model": MISTRAL_VISION_MODEL if MISTRAL_CONFIGURED else None,
+                "ocr_model": MISTRAL_OCR_MODEL if MISTRAL_CONFIGURED else None,
+                "audio_model": MISTRAL_AUDIO_MODEL if MISTRAL_CONFIGURED else None,
+            },
         },
     }
 
@@ -3619,10 +3940,10 @@ async def classify_endpoint(
         description="Fusion strategy: weighted, adaptive, agreement, cascade"
     ),
     vision_max_pages: int = Query(
-        8,
+        16,
         ge=1,
-        le=12,
-        description="Maximum representative pages sampled for vision analysis; pages are sampled deterministically rather than scanning the whole document"
+        le=24,
+        description="Ceiling on representative pages sampled for vision analysis; the actual count is chosen length-adaptively up to this ceiling, sampled deterministically across the whole document rather than scanning every page"
     ),
     ocr_lang: Optional[str] = Query(
         None,
@@ -3634,8 +3955,14 @@ async def classify_endpoint(
         le=50,
         description="Maximum pages sent through OCR fallback when extracted text quality is poor"
     ),
+    provider: ProviderChoice = Query(
+        ProviderChoice.custom,
+        description="LLM provider flow: 'custom' uses the self-hosted OpenAI-compatible models (text+vision) plus Tesseract OCR and the Whisper transcriber; 'mistral' routes text+vision to Mistral's OpenAI-compatible endpoint and uses Mistral OCR + Voxtral transcription"
+    ),
 ):
     """Classify a supported KO asset file with optional model routing."""
+    if provider == ProviderChoice.mistral and not MISTRAL_CONFIGURED:
+        raise HTTPException(status_code=503, detail="Mistral provider selected but MISTRAL_API_KEY is not configured.")
     filename = file.filename or "unknown.pdf"
     suffix = os.path.splitext(filename)[1].lower()
     document_suffixes = {".pdf", ".txt", ".docx", ".pptx"}
@@ -3752,9 +4079,88 @@ async def classify_endpoint(
             vision_max_pages=vision_max_pages,
             ocr_lang=ocr_lang or ALL_OCR_LANGS,
             ocr_max_pages=ocr_max_pages,
+            provider=provider,
         )
         result.processing_info["security_gate"] = agri_gate_payload
         result.processing_info["source_mode"] = "file"
+        return _prepare_response(result, top_k_candidates=top_k_candidates, debug=debug)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Classification failed: {str(e)}")
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+
+
+@app.post("/classify-text", response_model=ClassificationResponse)
+async def classify_text_endpoint(
+    body: TextClassificationRequest,
+    debug: bool = Query(False, description="If true, include full internal scoring/debug details in the response"),
+    top_k_candidates: int = Query(5, ge=1, le=10, description="Maximum number of ranked subtype candidates returned when debug is false"),
+    require_agriculture: bool = Query(True, description="Skip subtype classification for text assessed as non-agriculture"),
+    auto_route_models: bool = Query(True, description="Automatically decide whether the text LLM is used"),
+    use_text_llm: bool = Query(True, description="Allow Text LLM classification for agriculture-related text"),
+    heuristics_alpha: float = Query(0.4, ge=0.0, le=1.0, description="Weight for heuristics (0.4 = 40% heuristics, 60% LLM)"),
+    classification_confidence_threshold: float = Query(0.35, ge=0.0, le=1.0, description="Confidence threshold used to mark subtype classification as strong enough"),
+    candidate_gap_threshold: float = Query(0.12, ge=0.0, le=1.0, description="Top-candidate probability gap threshold"),
+    fusion_strategy: str = Query("adaptive", description="Fusion strategy: weighted, adaptive, agreement, cascade"),
+    provider: ProviderChoice = Query(ProviderChoice.custom, description="LLM provider flow: 'custom' (self-hosted) or 'mistral'"),
+):
+    """Classify a raw text snippet (no file upload).
+
+    Infers category, subcategory, topics, and intended purposes from the text. The
+    snippet is treated as a text document, so there is no OCR or vision routing
+    (those only apply to files/images). Capped at MAX_TEXT_INPUT_WORDS (~10 A4
+    pages / 5000 words).
+    """
+    if provider == ProviderChoice.mistral and not MISTRAL_CONFIGURED:
+        raise HTTPException(status_code=503, detail="Mistral provider selected but MISTRAL_API_KEY is not configured.")
+
+    text = (body.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Empty text")
+
+    word_count = len(text.split())
+    if word_count > MAX_TEXT_INPUT_WORDS:
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                f"Text too long ({word_count} words). Maximum allowed is {MAX_TEXT_INPUT_WORDS} words "
+                f"(~10 A4 pages) for the text endpoint."
+            ),
+        )
+
+    filename = body.filename or "input.txt"
+    if not filename.lower().endswith(".txt"):
+        filename = f"{filename}.txt"
+
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w", encoding="utf-8") as tmp:
+            tmp_path = tmp.name
+            tmp.write(text)
+
+        result = classify_document(
+            file_path=tmp_path,
+            filename=filename,
+            upload_content_type="text/plain",
+            require_agriculture=require_agriculture,
+            auto_route_models=auto_route_models,
+            use_vision=False,  # raw text has no pages/images to render
+            use_text_llm=use_text_llm,
+            heuristics_alpha=heuristics_alpha,
+            classification_confidence_threshold=classification_confidence_threshold,
+            candidate_gap_threshold=candidate_gap_threshold,
+            fusion_strategy=fusion_strategy,
+            provider=provider,
+        )
+        result.processing_info["security_gate"] = {"enabled": False, "source": "text", "skipped": True}
+        result.processing_info["source_mode"] = "text"
+        result.processing_info["input_word_count"] = word_count
         return _prepare_response(result, top_k_candidates=top_k_candidates, debug=debug)
     except HTTPException:
         raise
@@ -3776,11 +4182,16 @@ async def classify_media_llm_endpoint(
     include_transcript: bool = Query(False, description="If true, include the full recovered transcript in the response"),
     temperature: float = Query(0.2, ge=0.0, le=1.0, description="Sampling temperature for transcript-first text LLM classification"),
     max_chars: int = Query(12000, ge=1000, le=24000, description="Maximum transcript characters sent to the text LLM"),
+    provider: ProviderChoice = Query(ProviderChoice.custom, description="Provider for transcription + text LLM: 'custom' (Whisper + self-hosted LLM) or 'mistral' (Voxtral + Mistral LLM)"),
 ):
     """Classify audio/video using transcript-first text LLM only."""
+    use_mistral = provider == "mistral"
+    (LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, LLM_CONFIGURED,
+     VISION_LLM_BASE_URL, VISION_LLM_API_KEY, VISION_LLM_MODEL, _vision_configured) = _resolve_llm_config(provider)
+
     if not LLM_CONFIGURED:
-        raise HTTPException(status_code=503, detail="Text LLM is not configured.")
-    if not AUDIO_TRANSCRIPTION_CONFIGURED:
+        raise HTTPException(status_code=503, detail="Text LLM is not configured for the selected provider.")
+    if not use_mistral and not AUDIO_TRANSCRIPTION_CONFIGURED:
         raise HTTPException(status_code=503, detail="Media transcriber is not configured or not enabled.")
 
     filename = file.filename or "unknown.bin"
@@ -3858,7 +4269,10 @@ async def classify_media_llm_endpoint(
             )
 
         transcription_stage_start = time.time()
-        transcript_res = transcribe_audio_file(tmp_path) if category_used == "Audio" else transcribe_video_audio(tmp_path)
+        if category_used == "Audio":
+            transcript_res = mistral_transcribe(tmp_path) if use_mistral else transcribe_audio_file(tmp_path)
+        else:
+            transcript_res = transcribe_video_audio(tmp_path, transcriber=mistral_transcribe) if use_mistral else transcribe_video_audio(tmp_path)
         stage_timings_ms["transcription_ms"] = round((time.time() - transcription_stage_start) * 1000, 2)
 
         if not transcript_res.available:
@@ -3973,8 +4387,11 @@ async def classify_url_endpoint(
     ),
     classification_confidence_threshold: float = Query(0.35, ge=0.0, le=1.0, description="Confidence threshold used to mark subtype classification as strong enough"),
     fusion_strategy: str = Query("adaptive", description="Fusion strategy: weighted, adaptive, agreement, cascade"),
+    provider: ProviderChoice = Query(ProviderChoice.custom, description="Text LLM provider: 'custom' (self-hosted) or 'mistral'"),
 ):
     """Classify a public URL after Agri Gate screening and PageSense extraction."""
+    if provider == ProviderChoice.mistral and not MISTRAL_CONFIGURED:
+        raise HTTPException(status_code=503, detail="Mistral provider selected but MISTRAL_API_KEY is not configured.")
     endpoint_stage_timings_ms: Dict[str, float] = {}
     url = _validate_public_http_url(body.url)
 
@@ -4073,6 +4490,7 @@ async def classify_url_endpoint(
         heuristics_alpha=heuristics_alpha,
         classification_confidence_threshold=classification_confidence_threshold,
         fusion_strategy=fusion_strategy,
+        provider=provider,
     )
     result.processing_info.setdefault("stage_timings_ms", {}).update(endpoint_stage_timings_ms)
     result.processing_info["security_gate"] = agri_gate_payload
@@ -4112,6 +4530,33 @@ async def list_subcategories(request: Request):
                 "xlsx": "XLSX is usually routed as Dataset, but may remain Document in lightweight spreadsheet cases.",
             },
         },
+    }
+
+
+@app.get("/intended-purposes")
+async def list_intended_purposes(request: Request):
+    """List the intended-purpose (user-intent) taxonomy used for classification.
+
+    Useful for UI configuration and for understanding the `intended_purposes`
+    block returned by `/classify`. Multi-label, capped at 3 per asset.
+    """
+    from docint.purposes.infer import load_purposes, PURPOSE_MAX_SELECTED
+
+    purposes = load_purposes()
+    by_category: Dict[str, List[Dict[str, str]]] = {}
+    items = []
+    for p in purposes:
+        entry = {"key": p.key, "name": p.name, "category": p.category, "description": p.description}
+        items.append(entry)
+        by_category.setdefault(p.category or "Uncategorised", []).append(entry)
+
+    return {
+        "intended_purposes": items,
+        "total": len(items),
+        "by_category": by_category,
+        "category_count": len(by_category),
+        "max_selected_per_asset": PURPOSE_MAX_SELECTED,
+        "version": "intended_purpose_v1",
     }
 
 

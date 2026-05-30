@@ -1,6 +1,6 @@
 # Audio Identification And Validation Logic
 
-This document describes the current audio-classification logic in the KO classifier.
+This document describes the current audio-classification logic in the Agri-Tag.
 
 The audio branch now follows the same pattern as dataset, software, document, and image:
 

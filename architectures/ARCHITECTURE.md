@@ -1,4 +1,4 @@
-# KO Classifier Architecture
+# Agri-Tag Architecture
 
 ## Scope
 

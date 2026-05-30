@@ -1,6 +1,6 @@
 # Document Identification And Validation Logic
 
-This document describes the current document-classification logic in the KO classifier.
+This document describes the current document-classification logic in the Agri-Tag.
 
 The document branch now follows the same pattern as dataset and software:
 

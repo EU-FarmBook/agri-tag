@@ -1,4 +1,4 @@
-# KO Classifier API
+# Agri-Tag API
 
 FastAPI service for explainable category and subcategory classification. The current runtime scope covers document-family, tabular, image, audio, and video uploads in `.pdf`, `.txt`, `.docx`, `.pptx`, `.csv`, `.tsv`, `.xlsx`, `.jpg`, `.jpeg`, `.png`, `.mp3`, `.wav`, `.m4a`, `.mp4`, `.avi`, `.mov`, `.wmv`, `.mpeg`, `.mpg`, `.mkv`, `.flv`, `.webm`, `.3gp`, `.mts`, `.m2ts`, `.vob`, and `.rmvb`, plus public `http`/`https` URLs through a PageSense-backed text extraction path. Deterministic heuristics are always available, with optional text and vision LLM augmentation where the runtime path supports them. Agri Gate can be enabled per request for both files and URLs.
 
@@ -40,6 +40,7 @@ The broader category and KO-ingestion policy work is documented under [category_
 - Optionally asks a text LLM and/or a vision LLM to classify the same document.
 - Fuses heuristic and LLM probabilities with configurable strategies.
 - Returns feature-level evidence, rationale text, and contrastive explanations for top candidates.
+- Infers up to 3 `intended_purposes` (user intents, e.g. *Ensure compliance*, *Access data*) — see [Intended Purposes](#intended-purposes-user-intent).
 
 ## Current Document Subcategories
 
@@ -117,6 +118,66 @@ Those same criteria are now used in three places:
 - heuristic scoring
 - contrastive API explanations
 - LLM prompting guidance
+
+## Output Cardinality
+
+Each classification axis is returned with a fixed cardinality:
+
+| Axis | Count |
+| --- | --- |
+| `category_used` | exactly 1 (deterministic routing) |
+| subcategory (`all_candidates`) | 1, or 2 when the runner-up is a close contender (within `SUBCATEGORY_SECOND_GAP`, default `0.15`) |
+| `topics` | 1–3 |
+| `intended_purposes` | 1–3 |
+
+(`best_match` is always the single top subcategory; the optional second candidate
+surfaces only when the decision is genuinely close. Tunable via
+`SUBCATEGORY_MAX_CANDIDATES` and `SUBCATEGORY_SECOND_GAP`.)
+
+## Intended Purposes (User Intent)
+
+Alongside `topics`, each classified asset now carries an `intended_purposes` block —
+the **user-intent / functional** facet: *what a user would come to this resource to
+do* (e.g. *Ensure compliance with regulations*, *Access data*, *Build professional
+networks*). It is **orthogonal** to both the subcategory (genre/form) and topics
+(subject matter), and it is **multi-label, capped at 3** (ranked, so a clear primary
+still surfaces).
+
+The taxonomy is the published EU FarmBook purpose list at
+[data_model/runtime/purposes/intended_purposes.json](data_model/runtime/purposes/intended_purposes.json)
+(15 purposes across 8 categories such as *Data & Information*, *Governance &
+Compliance*, *Practice Implementation*, plus *Other*).
+
+Because intent is pragmatic rather than lexical, inference is staged (mirroring the
+agriculture/topics pipelines), in [docint/purposes/infer.py](docint/purposes/infer.py):
+
+- **Stage 1 — embedding (always on):** CPU-first multilingual match
+  (`intfloat/multilingual-e5-small`) of the document against each purpose's
+  `name + description` anchor. This is the baseline and offline fallback.
+- **Stage 2 — LLM (primary when available):** ranks the purposes for the document
+  and returns up to 3 with confidence + rationale. It **rides the configured text
+  LLM** (so it honours `provider=custom|mistral`) and is gated by `use_text_llm`
+  **and** agriculture relevance — a document about to be skipped by the agri gate
+  never pays for an LLM call. Falls back to Stage 1 if the LLM is off or fails.
+
+Example output for an ethics/compliance deliverable:
+
+```json
+"intended_purposes": {
+  "purposes": [
+    {"key": "NKixsHVz", "name": "Ensure compliance with regulations, policies, and guidelines",
+     "category": "Governance & Compliance", "score": 0.95, "rationale": "..."}
+  ],
+  "method": "llm",
+  "stages_used": ["llm"],
+  "version": "intended_purpose_v1",
+  "rationale": "..."
+}
+```
+
+Relevant settings (all optional): `PURPOSE_ENABLE_EMBEDDING`, `PURPOSE_EMBEDDING_MODEL`,
+`PURPOSE_MAX_SELECTED` (default `3`), `PURPOSE_SELECT_THRESHOLD`, `PURPOSE_LLM_MAX_CHARS`.
+Latency is reported under `processing_info.stage_timings_ms.intended_purposes_ms`.
 
 ## Agriculture Relevance
 
@@ -207,6 +268,12 @@ Resource-generation note:
 
 ## API Endpoints
 
+The service exposes 4 `POST` classification endpoints (`/classify`, `/classify-url`,
+`/classify-text`, `/classify-media-llm`) and 4 `GET` informational endpoints (`/`,
+`/health`, `/subcategories`, `/intended-purposes`), plus the auto-generated `/docs`
+Swagger UI. A side-by-side comparison of what each one does and how they differ is in
+[documentation/api_endpoints_overview.md](documentation/api_endpoints_overview.md).
+
 ### `POST /classify`
 
 Classifies a supported KO asset file. Agri Gate screening is optional and controlled by `use_agri_gate`.
@@ -265,9 +332,10 @@ Query parameters:
 - `vision_trigger_threshold`: confidence threshold below which vision may be triggered
 - `candidate_gap_threshold`: probability gap threshold below which close candidates may trigger vision
 - `fusion_strategy`: `weighted`, `adaptive`, `agreement`, or `cascade`
-- `vision_max_pages`: maximum sampled pages passed to the vision model; runtime uses deterministic representative-page sampling rather than scanning every page
+- `vision_max_pages`: ceiling on sampled pages passed to the vision model (default `16`, max `24`); the runtime chooses the actual count **length-adaptively** up to this ceiling and samples pages deterministically across the **whole** document (first page, last page, and a stratified spread of the body) rather than scanning every page. See [Long-PDF Handling and Literature](#long-pdf-handling-rationale-and-literature).
 - `ocr_lang`: optional Tesseract OCR language bundle, used only when PDF OCR fallback is triggered
 - `ocr_max_pages`: maximum pages sent through OCR fallback; default `5`, maximum `50`
+- `provider`: LLM provider flow, `custom` (default) or `mistral`. See [LLM Providers: Custom vs Mistral](#llm-providers-custom-vs-mistral).
 
 Example:
 
@@ -372,6 +440,153 @@ Representative response fields:
 - `category_inference`: inferred high-level category for the extracted URL text
 - `agriculture_relevance`: agri/non-agri decision with matched concepts and stage results
 
+### `POST /classify-text`
+
+Classifies a **raw text snippet** with no file upload — useful when the caller already
+has extracted text. The snippet is treated as a text document and run through the same
+pipeline as a file, so you get all four axes: `category_used` (always `Document`),
+subcategory, `topics`, and `intended_purposes`. Because there is no file, **OCR and
+vision do not apply** (those are for scanned pages/images).
+
+- Capped at `MAX_TEXT_INPUT_WORDS` (default `5000` words ≈ 10 A4 pages); longer input
+  returns `413`. Empty text returns `400`.
+- Supports the same `provider` (`custom` | `mistral`), `require_agriculture`,
+  `use_text_llm`, `fusion_strategy`, and `heuristics_alpha` controls as `/classify`.
+- Response is the standard `ClassificationResponse` with `processing_info.source_mode = "text"`
+  and `processing_info.input_word_count`.
+
+```bash
+curl -X POST "http://localhost:8011/classify-text?provider=mistral&use_text_llm=true&fusion_strategy=adaptive" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Step-by-step guide to adopting precision irrigation for smallholder farms ..."}'
+```
+
+## LLM Providers: Custom vs Mistral
+
+Every classification endpoint accepts a `provider` parameter that selects which
+LLM backend handles the request:
+
+- `provider=custom` (default) — the self-hosted, OpenAI-compatible flow we have
+  always used: Qwen for text, InternVL for vision, Tesseract for OCR fallback,
+  and the Whisper media-transcriber service for audio/video.
+- `provider=mistral` — routes the same pipeline to Mistral. Text and vision
+  classification go to Mistral's **OpenAI-compatible** chat endpoint (so the
+  existing classification logic is reused unchanged), while OCR and transcription
+  use Mistral's **native SDK** (`mistral-ocr-latest` and Voxtral).
+
+What each stage uses under `provider=mistral`:
+
+| Stage | `custom` | `mistral` |
+| --- | --- | --- |
+| Text classification | Qwen (`DOCINT_LLM_*`) | `MISTRAL_TEXT_MODEL` via OpenAI-compatible endpoint |
+| Vision (PDF pages / image / video frames) | InternVL (`VISION_LLM_*`) | `MISTRAL_VISION_MODEL` via OpenAI-compatible endpoint |
+| OCR fallback (scanned PDFs / images) | Tesseract | `MISTRAL_OCR_MODEL` (`mistral-ocr-latest`) |
+| Audio / video transcription | Whisper service (`MEDIA_TRANSCRIBER_*`) | Voxtral (`MISTRAL_AUDIO_MODEL`); for video, audio is first extracted with FFmpeg, then sent to Voxtral |
+
+The Mistral integration lives in a dedicated, self-contained module —
+[docint/providers/mistral_provider.py](docint/providers/mistral_provider.py) — so
+the two flows never get mixed up. Install the SDK with `pip install -r requirements.txt`
+(adds `mistralai`).
+
+### Configuration
+
+Only `MISTRAL_API_KEY` is required; the rest default sensibly:
+
+```bash
+MISTRAL_API_KEY=your-mistral-key
+MISTRAL_OPENAI_BASE_URL=https://api.mistral.ai/v1
+MISTRAL_TEXT_MODEL=mistral-small-latest
+MISTRAL_VISION_MODEL=mistral-medium-latest
+MISTRAL_OCR_MODEL=mistral-ocr-latest
+MISTRAL_AUDIO_MODEL=voxtral-mini-latest
+```
+
+### Recommended models
+
+- **Text** (`MISTRAL_TEXT_MODEL`): `mistral-small-latest` — cheap, fast, and
+  strong enough for classification. Step up to `mistral-medium-latest` if accuracy
+  falls short.
+- **Vision** (`MISTRAL_VISION_MODEL`): `mistral-medium-latest` or
+  `pixtral-large-latest`. (Mistral Small 3.1+ is also multimodal, so you can use
+  one model for both stages if you prefer.)
+- Avoid Magistral (reasoning, slow/costly overkill), Ministral 3B/8B (edge models),
+  and Codestral/Devstral (coding) for this task.
+
+### Why these models (model-selection rationale)
+
+These defaults are matched to **what the task is**, not chosen to minimise cost for
+its own sake. `/classify` does **bounded-label classification** — pick one of a fixed
+set of subcategories and emit JSON probabilities + a short rationale, with the rubric
+supplied in the prompt — and the LLM output is then **fused with deterministic
+heuristics**, so it is one weighted signal, not the sole judge. That profile rewards
+reliable instruction-following and JSON formatting, not deep reasoning or long-form
+generation.
+
+**Text — why `small`, not `medium`/`large`:**
+
+- The task sits well inside Small's competence band; document *genre* signal is
+  structural and strong, and fusion partly washes out marginal gains from a bigger
+  model.
+- You send up to ~15k characters per document, so per-token cost compounds. Small is
+  roughly **5–8× cheaper than Medium** and **15–20× cheaper than Large**, and faster
+  for synchronous requests.
+- **The "Large" trap:** `mistral-large-latest` currently resolves to **Large 2**, an
+  *older generation* than Medium 3, and is **text-only**. Mistral positions Medium 3
+  as matching or beating Large 2 at a fraction of the cost — so picking Large over
+  Medium often means **paying more for an older, non-multimodal model**. If you step
+  text up, go to `mistral-medium-latest`, not Large.
+- **When to upgrade text:** heavy non-English traffic (the runtime already makes the
+  text LLM primary for strongly non-English content, where a larger model genuinely
+  helps), or if evaluation shows Small confusing close competitors (e.g. *Tutorial*
+  vs *Guide/Manual*).
+
+**Vision — why `medium`, not "large":**
+
+- The naming is the catch: `mistral-large-latest` is **text-only**, so it is not even
+  a vision candidate. The real "large vision" option is **`pixtral-large-latest`**
+  (a vision specialist), not "Mistral Large".
+- So the honest comparison is **Medium 3 vs Pixtral Large**. Medium 3 is the modern
+  multimodal model — strong on document pages (layout, title, structure), cheaper, and
+  lower-latency — which is exactly what *genre* classification from page images needs.
+  Pixtral Large's extra capacity targets harder visual reasoning (dense charts,
+  diagrams, intricate tables) that this task does not require.
+- Vision is the **biggest token sink** (up to 16 page-images per request), so
+  over-provisioning the vision model is the most expensive mistake. Try
+  `pixtral-large-latest` only if evaluation shows figure-heavy or scanned cases
+  underperforming.
+
+**Bottom line:** `small` (text) + `medium` (vision) is the **accuracy-per-euro knee**
+for a fused, rubric-driven classifier. Both are single env vars, so upgrading is a
+one-line A/B test — and the right way to settle it is a small labelled eval set, not
+priors. (Approximate cost multipliers above are order-of-magnitude and shift over
+time; confirm against current Mistral pricing.)
+
+### Usage
+
+```bash
+curl -X POST "http://localhost:8011/classify?provider=mistral&use_text_llm=true&use_vision=true&fusion_strategy=adaptive" \
+  -F "file=@document.pdf"
+```
+
+`provider` is an enum (`custom` | `mistral`), so the Swagger UI at `/docs` renders it
+as a **dropdown** and rejects invalid values with `422`. A request with
+`provider=mistral` returns `503` if `MISTRAL_API_KEY` is not set.
+`GET /health` exposes a `models.mistral` block with the active models and a
+`configured` flag.
+
+### Caveats
+
+- **Cost moves from GPUs to per-token API.** Under `custom` the self-hosted models
+  make page-images effectively free; on Mistral you pay per image/token, so the
+  length-adaptive vision sampling (see below) directly controls your bill. Consider
+  a lower `vision_max_pages` ceiling for Mistral than for a self-hosted model.
+- **Image/audio format support is unchanged** — the same upload allowlist applies
+  regardless of provider (e.g. `.xls` and exotic audio/image formats are still not
+  accepted).
+- **Agriculture-relevance Stage 3** (the optional LLM tie-breaker for the agri gate)
+  always uses the `custom` text LLM, not Mistral; if no custom LLM is configured it
+  simply falls back to the lexicon/embedding stages.
+
 ## Recommended Fusion Defaults
 
 Recommended production default:
@@ -401,6 +616,10 @@ Practical guidance for `heuristics_alpha`:
 ### `GET /subcategories`
 
 Returns the active document subcategories together with their criteria metadata. This is useful for UI configuration, documentation generation, and debugging explainability output.
+
+### `GET /intended-purposes`
+
+Returns the intended-purpose (user-intent) taxonomy used for the `intended_purposes` block — the full list with `key`, `name`, `category`, and `description`, grouped by category, plus `max_selected_per_asset`. Useful for UI configuration. See [Intended Purposes](#intended-purposes-user-intent).
 
 ### `GET /health`
 
@@ -478,6 +697,8 @@ Add these variables only if vision classification should be enabled:
 VISION_LLM_BASE_URL=https://your-internvl-server.com/v1
 VISION_LLM_MODEL=internvl3-5-14b
 VISION_LLM_API_KEY=your-key
+# Raster DPI for PDF page rendering sent to the vision model (150-200 recommended)
+VISION_RENDER_DPI=150
 ```
 
 Add these variables if file and URL security screening should be enabled:
@@ -550,6 +771,99 @@ docker run --rm -p 8000:8000 --env-file .env agri-tag:local
 - `cascade` fusion is the most practical speed-oriented option when heuristics are often decisive.
 - The vision model now uses deterministic representative-page sampling rather than overlapping page windows.
 - Text and vision prompts are aligned with the same criteria vocabulary used by heuristics.
+- The agriculture-relevance and KO-eligibility LLM stages follow the request's `provider` (so `provider=mistral` no longer falls back to the self-hosted endpoint).
+- **Experimental** `MERGE_AGRI_SUBCATEGORY_LLM` (default off): for an *ambiguous-agriculture document*, the Stage-3 agriculture LLM and the document subtype LLM are collapsed into a **single** call (saves one round-trip). Only the ambiguous path is affected; clearly agri/non-agri docs are still decided cheaply by lexicon/embedding. Validate agriculture-gate accuracy on an eval set before enabling in production.
+
+## Long-PDF Handling: Rationale and Literature
+
+This service is a **classifier**, not an extraction/QA pipeline. The goal is a label
+(category + subcategory) plus an auditable rationale — not the recovery of every fact
+in the document. That distinction drives how long PDFs are handled and why we sample
+rather than read every page.
+
+### How a PDF flows through the pipeline
+
+| Stage | What it sees | Limit | Env / param |
+| --- | --- | --- | --- |
+| Text extraction (PyMuPDF) | **All pages** | none — full text feeds the deterministic heuristics | — |
+| Text LLM | head 45% / mid 25% / tail ~30% sample of the full text | `15000` chars (document path) | `_sample_text_for_llm` |
+| Vision LLM | stratified page **images** across the whole document | length-adaptive, ceiling `vision_max_pages` (default `16`) | `vision_max_pages`, `VISION_RENDER_DPI` |
+| OCR fallback (scanned PDFs only) | first N pages | `ocr_max_pages` (default `5`, max `50`), DPI `220` | `ocr_max_pages`, `ocr_lang` |
+| Hard reject | — | `MAX_DOCUMENT_UNITS` pages | `MAX_DOCUMENT_UNITS=100` |
+
+The full extracted text always feeds the deterministic heuristic scorer, so the
+heuristic layer is never sampled — it is the information-complete safety net. Sampling
+only affects the *optional* LLM augmentation layers.
+
+### Vision page sampling
+
+`vision_max_pages` is a **ceiling**, not a fixed count. The actual number of pages sent
+to the vision model is chosen length-adaptively:
+
+- documents at or below the ceiling are covered in full
+- longer documents get `max(6, ceil(total_pages / 8))` pages, clamped to the ceiling
+
+Pages are sampled at evenly spaced fractional positions so the **first page** (title,
+abstract, layout), the **last page** (references, appendices, back-matter), and a
+**stratified spread of the body** are always represented. Example coverage at the default
+ceiling of 16:
+
+| Document length | Pages sent to vision |
+| --- | --- |
+| 8 pages | all 8 |
+| 40 pages | 6 (pages 1, 9, 17, 24, 32, 40) |
+| 100 pages | 13 (pages 1, 9, 17 … 92, 100) |
+| 250 pages | 16 (capped, spread 1 → 250) |
+
+`VISION_RENDER_DPI` (default `150`) controls raster resolution, and only the sampled
+pages are rendered — rendering is page-by-page, so vision cost scales with the number of
+pages actually used, not with document length.
+
+### Why sample instead of reading every page
+
+1. **The task is genre classification, and genre signal is front/back-loaded.** Whether a
+   PDF is a *journal article*, a *manual*, a *presentation*, or a *technical report* is
+   largely determined by its title page, abstract, table of contents, layout, and
+   reference/appendix structure. Interior body pages add little discriminative signal for
+   this specific decision, so stratified sampling loses very little classification accuracy.
+2. **"Lost in the Middle" (Liu et al., 2023, *TACL*).** Transformer LLMs attend most
+   reliably to the **beginning and end** of their context and degrade in the middle. Both
+   the text sampler (head/mid/tail) and the vision sampler (first + last always included)
+   are aligned with this finding. The corollary: the sampled middle is also the part the
+   model attends to worst, which is acceptable for classification but a known limitation for
+   content-sensitive tasks.
+3. **Resolution beats page count for text-bearing documents.** Under a fixed token budget,
+   VLM document-understanding work consistently finds that *fewer pages at higher
+   resolution* beats *more pages at low resolution*. The practical sweet spot is
+   **150–200 DPI**; below ~100 DPI small text becomes unreliable, above ~300 DPI mostly
+   burns tokens for diminishing returns. `VISION_RENDER_DPI=150` sits at the efficient end
+   of that band.
+4. **VLM tiling makes pages expensive.** InternVL-style models use dynamic tiling (multiple
+   tiles per image), so a single high-resolution page can cost many hundreds to a few
+   thousand tokens. A flat "send 8 pages" cap exists for this reason; the length-adaptive
+   budget keeps cost bounded while restoring whole-document coverage.
+5. **Empirical band for classification: ~8–16 well-chosen pages.** For documents up to the
+   `MAX_DOCUMENT_UNITS=100` cap, accuracy plateaus past roughly a dozen stratified pages,
+   while latency and cost keep rising. The defaults target that knee.
+
+### Tuning guidance (finding the sweet spot)
+
+- **Default (`vision_max_pages=16`, `VISION_RENDER_DPI=150`)** is the recommended balance
+  for mixed traffic up to 100 pages.
+- **Dense, text-heavy reports** benefit more from the text path than from vision; consider
+  raising the document text sample (`_sample_text_for_llm` `max_chars`, currently `15000` ≈
+  6–10 dense pages) before raising vision pages.
+- **Scanned or visually formatted material** (flyers, slide decks, posters) benefits from
+  vision; raise `vision_max_pages` toward `24` and/or `VISION_RENDER_DPI` toward `200`.
+- **Latency/cost-sensitive deployments**: prefer `fusion_strategy=cascade` so heuristics
+  resolve the easy cases and vision is only triggered when heuristics are weak or
+  candidates are close.
+- **Rule of thumb**: budget ~12–15 "page-equivalents" of LLM attention per document and
+  split it between text characters and vision pages based on whether the signal is textual
+  or visual. Past that, classification accuracy plateaus.
+
+A side-by-side comparison of all endpoints lives in
+[documentation/api_endpoints_overview.md](documentation/api_endpoints_overview.md).
 
 ## Project Structure
 
@@ -557,6 +871,8 @@ docker run --rm -p 8000:8000 --env-file .env agri-tag:local
 - [subcategories.py](docint/rubrics/subcategories.py): active subcategory source of truth
 - [subcategory_scorer.py](docint/rubrics/subcategory_scorer.py): heuristic scoring engine
 - [subcategory_classify.py](docint/llm/subcategory_classify.py): text and vision LLM classification
+- [mistral_provider.py](docint/providers/mistral_provider.py): self-contained Mistral provider (OCR, Voxtral transcription, config) for `provider=mistral`
+- [purposes/infer.py](docint/purposes/infer.py): intended-purpose (user-intent) inference (embedding + LLM stages)
 - [intelligent_fusion.py](docint/fusion/intelligent_fusion.py): fusion strategies
 - [data_model](data_model): taxonomy, consolidation, and category policy documents
 

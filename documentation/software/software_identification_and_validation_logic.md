@@ -1,6 +1,6 @@
 # Software Identification And Validation Logic
 
-This document describes the current software-classification logic in the KO classifier.
+This document describes the current software-classification logic in the Agri-Tag.
 
 The software branch follows the same pattern now used for datasets:
 

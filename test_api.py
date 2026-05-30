@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script for KO Classifier API v2.0 with Basic Auth
+Test script for Agri-Tag API v2.0 with Basic Auth
 
 Tests health, subcategories, and classification with various fusion options.
 """
@@ -147,7 +147,7 @@ def test_classify(pdf_path: str, options: dict, label: str):
 def main():
     """Run all tests."""
     print("=" * 70)
-    print("KO Classifier API v2.0 Test Suite")
+    print("Agri-Tag API v2.0 Test Suite")
     print("=" * 70)
     print(f"Auth User: {AUTH_USER}")
     print()

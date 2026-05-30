@@ -148,7 +148,18 @@ def sample_video_frames(video_path: str, max_frames: int = 6) -> VideoFrameSampl
     )
 
 
-def transcribe_video_audio(video_path: str) -> AudioTranscriptionResult:
+def transcribe_video_audio(video_path: str, transcriber=None) -> AudioTranscriptionResult:
+    """Extract the audio track from a video and transcribe it.
+
+    Args:
+        video_path: path to the video file
+        transcriber: optional callable(audio_path) -> AudioTranscriptionResult used
+            to transcribe the extracted audio. Defaults to the Whisper-backed
+            ``transcribe_audio_file``; pass the Mistral Voxtral adapter to route
+            video transcription through Mistral.
+    """
+    if transcriber is None:
+        transcriber = transcribe_audio_file
     if not shutil.which("ffmpeg"):
         return AudioTranscriptionResult(
             available=False,
@@ -209,7 +220,7 @@ def transcribe_video_audio(video_path: str) -> AudioTranscriptionResult:
                 rationale="Audio extraction completed, but the resulting track was empty.",
             )
 
-        result = transcribe_audio_file(audio_path)
+        result = transcriber(audio_path)
         if result.available and result.used and not result.text.strip():
             return AudioTranscriptionResult(
                 available=True,
