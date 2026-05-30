@@ -485,53 +485,24 @@ app = FastAPI(
     title="Agri-Tag API",
     description="""
 **Agriculture-gated knowledge-object classification** with explainable, category-specific
-subtype scoring. Accepts files, public URLs, and raw text — via the self-hosted
-(Qwen / InternVL) or **Mistral** provider (`provider=custom|mistral`).
-
-## Pipeline
-
-```
-INPUT   file | url | text | audio/video
-  |
-  v
-[0] optional Agri Gate security scan            (use_agri_gate)
-[1] extract text   PyMuPDF / OCR / transcription / PageSense
-[2] category       deterministic MIME routing            -> 1 category
-[3] agriculture relevance   lexicon -> embedding -> LLM
-        |__ not agri -> SKIP  (classification_skipped + skip_reason)
-[4] KO-eligibility gate      drops job ads / tenders / events
-[5] INFERENCE (agri only):
-      - subcategory        heuristics(27 signals) + text-LLM + vision-LLM -> FUSE   (1-2)
-      - topics             lexicon + embedding  (no LLM)                            (1-3)
-      - intended_purposes  embedding + LLM                                          (1-3)
-```
-
-Engines, cheap -> expensive: deterministic code (ms) -> sentence-transformers (~100 ms)
--> remote LLM (seconds). Vision is the heaviest stage and fires only when needed.
+subtype scoring. Accepts files, public URLs, and raw text — via the self-hosted or
+**Mistral** provider (`provider=custom|mistral`).
 
 ## Providers (`provider=custom | mistral`)
 
-* **custom** — Qwen (text), InternVL (vision), Tesseract (OCR), Whisper (audio)
+* **custom** — your self-hosted vLLM models (text + vision), Tesseract (OCR), Whisper (audio)
 * **mistral** — mistral-small (text), mistral-medium (vision), mistral-ocr, Voxtral
-
-## Endpoints
-
-* `POST /classify` — file upload; the only path with **OCR + vision**
-* `POST /classify-url` — public URL; text-only via PageSense
-* `POST /classify-text` — raw text snippet (≤ ~5000 words / 10 A4 pages)
-* `POST /classify-media-llm` — audio/video, transcript-first text-LLM only
-* `GET /subcategories` — subtype taxonomy + criteria
-* `GET /intended-purposes` — user-intent taxonomy
-* `GET /health` — service + model readiness (public, no auth)
 
 ## File type coverage
 
-* **Document**: `.pdf` `.txt` `.docx` `.pptx`
-* **Dataset**: `.csv` `.tsv` `.xlsx` `.json`
-* **Image**: `.jpg` `.jpeg` `.png`
-* **Audio**: `.mp3` `.wav` `.m4a`
-* **Video**: 14 formats (`.mp4` `.mov` `.mkv` `.webm` …)
-* **Software Application**: no upload types; inferred from URL content only
+| Category | Upload extensions |
+| --- | --- |
+| **Document** | `.pdf` · `.txt` · `.docx` · `.pptx` |
+| **Dataset** | `.csv` · `.tsv` · `.xlsx` · `.json` |
+| **Image** | `.jpg` · `.jpeg` · `.png` |
+| **Audio** | `.mp3` · `.wav` · `.m4a` |
+| **Video** | `.mp4` · `.avi` · `.mov` · `.wmv` · `.mpeg` · `.mpg` · `.mkv` · `.flv` · `.webm` · `.3gp` · `.mts` · `.m2ts` · `.vob` · `.rmvb` |
+| **Software Application** | no upload types — inferred from URL content only |
 """,
     version="2.0.0",
     docs_url="/docs",  # Enable docs - they'll be protected by middleware
@@ -857,16 +828,16 @@ def _apply_dataset_consensus_boost(
 def _prepare_response(
     result: ClassificationResponse,
     *,
-    top_k_candidates: int,
     debug: bool,
 ) -> ClassificationResponse:
     prepared = result.model_copy(deep=True)
     if debug:
         return prepared
 
-    # Surface 1 subcategory, or at most 2 when the runner-up is a close contender.
-    effective_k = min(top_k_candidates, SUBCATEGORY_MAX_CANDIDATES)
-    surfaced = prepared.all_candidates[:effective_k]
+    # Surface 1 subcategory, or at most SUBCATEGORY_MAX_CANDIDATES when the runner-up
+    # is a close contender. This (+ SUBCATEGORY_SECOND_GAP) is the single source of
+    # truth for how many subcategory candidates are returned.
+    surfaced = prepared.all_candidates[:SUBCATEGORY_MAX_CANDIDATES]
     if (
         len(surfaced) >= 2
         and (surfaced[0].probability - surfaced[1].probability) > SUBCATEGORY_SECOND_GAP
@@ -4046,7 +4017,6 @@ async def classify_endpoint(
     request: Request,
     file: UploadFile = File(..., description="Supported KO asset file to classify"),
     debug: bool = Query(False, description="If true, include full internal scoring/debug details in the response"),
-    top_k_candidates: int = Query(5, ge=1, le=10, description="Maximum number of ranked subtype candidates returned when debug is false"),
     use_agri_gate: bool = Query(False, description="If true, send the uploaded file to Agri Gate before classification"),
     require_agriculture: bool = Query(True, description="Skip subtype classification for assets assessed as non-agriculture"),
     auto_route_models: bool = Query(True, description="Automatically decide whether text and vision models should be used"),
@@ -4209,7 +4179,7 @@ async def classify_endpoint(
         )
         result.processing_info["security_gate"] = agri_gate_payload
         result.processing_info["source_mode"] = "file"
-        return _prepare_response(result, top_k_candidates=top_k_candidates, debug=debug)
+        return _prepare_response(result, debug=debug)
     except HTTPException:
         raise
     except Exception as e:
@@ -4226,7 +4196,6 @@ async def classify_endpoint(
 async def classify_text_endpoint(
     body: TextClassificationRequest,
     debug: bool = Query(False, description="If true, include full internal scoring/debug details in the response"),
-    top_k_candidates: int = Query(5, ge=1, le=10, description="Maximum number of ranked subtype candidates returned when debug is false"),
     require_agriculture: bool = Query(True, description="Skip subtype classification for text assessed as non-agriculture"),
     auto_route_models: bool = Query(True, description="Automatically decide whether the text LLM is used"),
     use_text_llm: bool = Query(True, description="Allow Text LLM classification for agriculture-related text"),
@@ -4287,7 +4256,7 @@ async def classify_text_endpoint(
         result.processing_info["security_gate"] = {"enabled": False, "source": "text", "skipped": True}
         result.processing_info["source_mode"] = "text"
         result.processing_info["input_word_count"] = word_count
-        return _prepare_response(result, top_k_candidates=top_k_candidates, debug=debug)
+        return _prepare_response(result, debug=debug)
     except HTTPException:
         raise
     except Exception as e:
@@ -4500,7 +4469,6 @@ async def classify_media_llm_endpoint(
 async def classify_url_endpoint(
     body: UrlClassificationRequest,
     debug: bool = Query(False, description="If true, include full internal scoring/debug details in the response"),
-    top_k_candidates: int = Query(5, ge=1, le=10, description="Maximum number of ranked subtype candidates returned when debug is false"),
     use_agri_gate: bool = Query(False, description="If true, send the submitted URL to Agri Gate before extraction"),
     require_agriculture: bool = Query(True, description="Skip subtype classification for URLs assessed as non-agriculture"),
     auto_route_models: bool = Query(True, description="Automatically decide whether text models should be used"),
@@ -4621,7 +4589,7 @@ async def classify_url_endpoint(
     result.processing_info.setdefault("stage_timings_ms", {}).update(endpoint_stage_timings_ms)
     result.processing_info["security_gate"] = agri_gate_payload
     result.processing_info["source_mode"] = "url"
-    return _prepare_response(result, top_k_candidates=top_k_candidates, debug=debug)
+    return _prepare_response(result, debug=debug)
 
 
 @app.get("/subcategories")
