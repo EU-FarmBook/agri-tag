@@ -7,8 +7,13 @@ from typing import Any, Dict
 from openai import OpenAI
 
 
-SYSTEM_PROMPT = """You are an agriculture relevance classifier for PDF text.
-Decide whether the document is agriculture-related.
+SYSTEM_PROMPT = """You are an agriculture relevance classifier for knowledge objects
+(documents, datasets, transcripts). Decide whether the content is agriculture-related.
+
+The text may be written in ANY language (e.g. English, Dutch, German, French, Greek,
+Bulgarian, Spanish, Italian, Polish, ...). Classify by MEANING, not language; never
+treat non-English text as less relevant, and judge column names / abbreviations
+(e.g. "rainfall_mm", "temperature_c", "ndvi", "parcel_id") on what they represent.
 
 Return ONLY valid JSON with:
 {
@@ -20,9 +25,18 @@ Return ONLY valid JSON with:
 }
 
 Guidance:
-- Treat agriculture broadly: farming systems, crops, livestock, manure, fertilizers, soil, irrigation, farm sustainability, nutrient recovery, bio-based fertilisers, food systems, and related agri-bioeconomy topics.
-- Do not classify general water science, generic packaging, or unrelated industrial topics as agriculture-related unless the document clearly connects them to farming, agricultural inputs, food systems, or farm-level production.
-- Be conservative when evidence is weak.
+- Treat agriculture broadly: farming systems, crops, livestock, manure, fertilizers,
+  soil, irrigation, farm sustainability, nutrient recovery, bio-based fertilisers,
+  food systems, forestry, rural development, and related agri-bioeconomy topics.
+- INCLUDE environmental, climate, weather, agro-meteorological, and temporal data when
+  it is the kind used in agriculture/land/rural contexts — e.g. weather station series
+  (temperature, rainfall, humidity, solar radiation, wind), soil moisture, growing-season
+  or agro-climatic conditions, and remote-sensing/geospatial parcel data. These are core
+  agricultural environmental data, not "general water science".
+- Only exclude content with no plausible agricultural connection (e.g. consumer banking,
+  unrelated industrial manufacturing, general entertainment).
+- When a dataset or document plausibly supports farming or land/rural decision-making,
+  classify it as agriculture-related.
 """
 
 

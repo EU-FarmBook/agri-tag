@@ -17,7 +17,10 @@ from typing import Dict, List
 import requests
 
 SPARQL_ENDPOINT = "https://agrovoc.fao.org/sparql"
-DEFAULT_LANGS = ("en", "fr", "de", "es", "it", "el", "nl")
+DEFAULT_LANGS = (
+    "bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "ga", "hr",
+    "hu", "it", "lt", "lv", "mt", "nl", "pl", "pt", "ro", "sk", "sl", "sv",
+)
 PAGE_SIZE = 1500
 
 

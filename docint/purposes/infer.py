@@ -126,11 +126,11 @@ def _embedding_available() -> bool:
         return False
 
 
-@lru_cache(maxsize=1)
 def _model():
-    from sentence_transformers import SentenceTransformer
+    # Shared singleton across agriculture/topics/purposes (same default model).
+    from docint.embedding.shared import get_embedding_model
 
-    return SentenceTransformer(PURPOSE_EMBEDDING_MODEL, device="cpu")
+    return get_embedding_model(PURPOSE_EMBEDDING_MODEL, device="cpu")
 
 
 @lru_cache(maxsize=1)
@@ -198,7 +198,8 @@ def _build_llm_prompt(text: str) -> List[Dict[str, str]]:
     system = (
         "You label a knowledge object with the USER INTENTS it serves - what a user "
         "would come to this resource to DO. This is different from its topic or its "
-        "document type. Choose only from the provided list."
+        "document type. Choose only from the provided list. The document may be in ANY "
+        "language; judge by meaning, not language."
     )
     instructions = (
         "From the INTENDED PURPOSE OPTIONS below, select the 1 to 3 that best match the "
@@ -226,7 +227,7 @@ def _infer_llm(text: str, *, base_url: str, api_key: str, model: str, max_result
         resp = client.chat.completions.create(
             model=model,
             messages=_build_llm_prompt(text),
-            temperature=0.1,
+            temperature=float(os.getenv("LLM_TEMPERATURE", "0")),
         )
         raw = resp.choices[0].message.content or ""
         data = _parse_llm_json_response(raw, label="intended-purpose LLM")

@@ -8,6 +8,7 @@ from openai import OpenAI
 
 
 SYSTEM_PROMPT = """You are a knowledge-object eligibility classifier.
+The text may be in ANY language; judge by meaning, not language.
 Your job is NOT to decide whether the text is agriculture-related.
 Your job is to decide whether the content is an eligible knowledge object for content classification,
 or whether it should be excluded because it is mainly one of these:

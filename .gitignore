@@ -111,8 +111,13 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# Eval harness output
+eval_results.csv
+eval_*.csv
+
 # Environments
 .env
+.env.prod
 .env.local
 .env.*.local
 .venv

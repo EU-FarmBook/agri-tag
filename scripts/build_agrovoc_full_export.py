@@ -22,7 +22,13 @@ import requests
 from requests import Response
 
 SPARQL_ENDPOINT = "https://agrovoc.fao.org/sparql"
-DEFAULT_LANGS = ("en", "fr", "de", "es", "it", "el", "nl")
+# Full EU official-language set (ISO 639-1), matching the OCR ALL_OCR_LANGS coverage.
+# AGROVOC may not have every label in every language; the SPARQL FILTER returns only
+# what exists, so requesting the full set is safe (just a larger export).
+DEFAULT_LANGS = (
+    "bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "ga", "hr",
+    "hu", "it", "lt", "lv", "mt", "nl", "pl", "pt", "ro", "sk", "sl", "sv",
+)
 PAGE_SIZE = 250
 MAX_RETRIES = 5
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}

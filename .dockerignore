@@ -24,6 +24,7 @@ ENV/
 
 # Environment files (should be mounted or passed separately)
 .env
+.env.prod
 .env.local
 
 # Test files
@@ -61,3 +62,4 @@ docker-compose*.yml
 .DS_Store
 *.log
 logs/
+temp/

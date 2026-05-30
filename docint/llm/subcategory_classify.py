@@ -119,6 +119,7 @@ def _build_unified_category_prompt(
     profiles = load_category_profiles(category)
     prompt_lines = [
         f"You are a {category.lower()} classifier for agricultural knowledge objects.",
+        "The content may be in ANY language; classify by meaning, not language, and never penalise non-English text.",
         "Use the merged cross-modal subtype model.",
         "Score category-specific intermediate profiles first, then choose the best final unified subcategory.",
         "Ground your decision in observable evidence only.",
@@ -161,6 +162,23 @@ def _build_unified_category_prompt(
                 )
         prompt_lines.append("")
 
+    if category == "Document":
+        prompt_lines.extend([
+            "Disambiguation rules (apply before choosing):",
+            "- A short (~1 page) document that DESCRIBES a single tool, product, service, app,"
+            " project, or initiative for awareness — typically a title, an author/organisation,"
+            " a one-paragraph blurb, and often a funding disclaimer — is"
+            " 'Summaries, Factsheets & Outreach'. Do NOT label such factsheets as 'Explainers'"
+            " (which teach a concept/process in depth) or 'How-To Guides' (which give ordered steps).",
+            "- Classify by FORM over TOPIC: a speaker-led slide deck, lecture, hearing, or webinar"
+            " presentation (named speaker, date, slides) is 'Talks, Lectures & Webinars' even when"
+            " its subject is policy. Reserve 'Policy & Governance Content' for documents that"
+            " state policy, rules, recommendations, or governance analysis as their main form.",
+            "- A document that analyses or recommends policy (e.g. a 'policy analysis' or"
+            " 'recommendations' report) is 'Policy & Governance Content', not 'Technical & Research"
+            " Content'.",
+            "",
+        ])
     prompt_lines.extend([
         "Return ONLY valid JSON with:",
     ])

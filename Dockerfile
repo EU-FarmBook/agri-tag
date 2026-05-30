@@ -38,11 +38,14 @@ ARG TORCH_VERSION=2.11.0
 ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 
 # Install runtime OS dependencies (PDF + OCR)
+# tesseract-ocr-all: the default OCR bundle is the full EU language set
+# (ALL_OCR_LANGS), so eng-only fails on non-English PDFs (e.g. Greek ->
+# "Failed loading language 'ell'"). Swap to specific packs if you want a leaner image.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     poppler-utils \
     tesseract-ocr \
-    tesseract-ocr-eng \
+    tesseract-ocr-all \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 

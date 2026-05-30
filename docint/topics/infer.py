@@ -144,24 +144,12 @@ def _embedding_available() -> bool:
     )
 
 
-@lru_cache(maxsize=1)
 def _load_embedding_model():
-    # Reuse the agriculture pipeline's cached model when the model name matches,
-    # so we don't hold two copies of multilingual-e5 in memory.
-    try:
-        from docint.domain.agriculture_pipeline import (
-            AGRI_EMBEDDING_MODEL,
-            _load_embedding_model as _agri_loader,
-        )
+    # Shared singleton: when the model name matches agriculture/purposes (the
+    # default), all three reuse one in-memory copy of multilingual-e5.
+    from docint.embedding.shared import get_embedding_model
 
-        if AGRI_EMBEDDING_MODEL == TOPIC_EMBEDDING_MODEL:
-            return _agri_loader()
-    except Exception:
-        pass
-
-    from sentence_transformers import SentenceTransformer
-
-    return SentenceTransformer(TOPIC_EMBEDDING_MODEL, device="cpu")
+    return get_embedding_model(TOPIC_EMBEDDING_MODEL, device="cpu")
 
 
 @lru_cache(maxsize=1)

@@ -148,17 +148,23 @@ The taxonomy is the published EU FarmBook purpose list at
 (15 purposes across 8 categories such as *Data & Information*, *Governance &
 Compliance*, *Practice Implementation*, plus *Other*).
 
-Because intent is pragmatic rather than lexical, inference is staged (mirroring the
-agriculture/topics pipelines), in [docint/purposes/infer.py](docint/purposes/infer.py):
+Like topics, intended purposes are **only emitted for agriculture-related assets** — a
+document that fails the agriculture gate is skipped, so it produces neither topics nor
+purposes (and pays for neither stage). For agriculture-related assets, inference is
+staged (mirroring the agriculture/topics pipelines), in
+[docint/purposes/infer.py](docint/purposes/infer.py):
 
-- **Stage 1 — embedding (always on):** CPU-first multilingual match
+- **Stage 1 — embedding:** CPU-first multilingual match
   (`intfloat/multilingual-e5-small`) of the document against each purpose's
   `name + description` anchor. This is the baseline and offline fallback.
 - **Stage 2 — LLM (primary when available):** ranks the purposes for the document
   and returns up to 3 with confidence + rationale. It **rides the configured text
-  LLM** (so it honours `provider=custom|mistral`) and is gated by `use_text_llm`
-  **and** agriculture relevance — a document about to be skipped by the agri gate
-  never pays for an LLM call. Falls back to Stage 1 if the LLM is off or fails.
+  LLM** (so it honours `provider=custom|mistral`) and is gated by `use_text_llm`.
+  Falls back to Stage 1 if the LLM is off or fails.
+
+The embedding model is **shared** across the agriculture, topics, and purpose stages
+(one in-memory copy of `e5-small`, not three) and is **pre-warmed at startup**
+(`PREWARM_EMBEDDINGS=true`) so the first request isn't the one that pays the load cost.
 
 Example output for an ethics/compliance deliverable:
 
@@ -239,7 +245,20 @@ Resource-generation note:
   --inputs data_model/build/agriculture/anchor_texts.jsonl
 ```
 
-- Full AGROVOC regeneration workflow:
+### Multilingual lexicon/topic regeneration
+
+The build scripts now default to the **full 24-language EU set** (`build_agrovoc_full_export.py`,
+`build_agriculture_lexicon_from_agrovoc.py`, `build_agrovoc_anchor_texts.py` — `DEFAULT_LANGS`).
+Regenerating produces a **multilingual** agriculture lexicon + topic signals (Cyrillic, Slavic,
+Nordic included), so the cheap lexical fast-path works in every EU language — not just via the
+embedding/LLM path. One-shot runner (the AGROVOC export step is slow and resumable):
+
+```bash
+bash scripts/regenerate_multilingual_resources.sh
+# then restart the service to load the new resources
+```
+
+- Full AGROVOC regeneration workflow (what the runner does, step by step):
 
 ```bash
 .venv/bin/python scripts/build_agrovoc_full_export.py
@@ -248,6 +267,8 @@ Resource-generation note:
 .venv/bin/python scripts/build_agriculture_anchor_texts.py
 .venv/bin/python scripts/compute_agriculture_bucket_centroids.py \
   --inputs data_model/build/agriculture/anchor_texts.jsonl
+.venv/bin/python scripts/build_topic_signals_from_agrovoc.py
+.venv/bin/python scripts/compute_topic_centroids.py
 ```
 
 - The AGROVOC full-export script now supports retries and checkpointed resume:
@@ -332,7 +353,7 @@ Query parameters:
 - `vision_trigger_threshold`: confidence threshold below which vision may be triggered
 - `candidate_gap_threshold`: probability gap threshold below which close candidates may trigger vision
 - `fusion_strategy`: `weighted`, `adaptive`, `agreement`, or `cascade`
-- `vision_max_pages`: ceiling on sampled pages passed to the vision model (default `16`, max `24`); the runtime chooses the actual count **length-adaptively** up to this ceiling and samples pages deterministically across the **whole** document (first page, last page, and a stratified spread of the body) rather than scanning every page. See [Long-PDF Handling and Literature](#long-pdf-handling-rationale-and-literature).
+- `vision_max_pages`: ceiling on page-images sent to the vision model per request (default `8`); the runtime chooses the actual count **length-adaptively** up to this ceiling and samples pages deterministically across the **whole** document (first page, last page, and a stratified spread of the body). It is **clamped server-side to `VISION_MAX_PAGES_CAP`** (default `8`), which **must match your vLLM server's `--limit-mm-per-prompt image:N`** — otherwise the VLM rejects the request. See [Long-PDF Handling and Literature](#long-pdf-handling-rationale-and-literature).
 - `ocr_lang`: optional Tesseract OCR language bundle, used only when PDF OCR fallback is triggered
 - `ocr_max_pages`: maximum pages sent through OCR fallback; default `5`, maximum `50`
 - `provider`: LLM provider flow, `custom` (default) or `mistral`. See [LLM Providers: Custom vs Mistral](#llm-providers-custom-vs-mistral).
@@ -550,7 +571,7 @@ generation.
   lower-latency — which is exactly what *genre* classification from page images needs.
   Pixtral Large's extra capacity targets harder visual reasoning (dense charts,
   diagrams, intricate tables) that this task does not require.
-- Vision is the **biggest token sink** (up to 16 page-images per request), so
+- Vision is the **biggest token sink** (up to `VISION_MAX_PAGES_CAP` page-images per request, default 8), so
   over-provisioning the vision model is the most expensive mistake. Try
   `pixtral-large-latest` only if evaluation shows figure-heavy or scanned cases
   underperforming.
@@ -652,16 +673,31 @@ Swagger UI for interactive API testing.
 
 ### Standalone
 
-System packages required for full PDF and OCR support:
+System packages required for full PDF, OCR, and media support:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y poppler-utils tesseract-ocr tesseract-ocr-eng
+# poppler-utils: PDF->image rendering (OCR fallback + vision page sampling)
+# ffmpeg:        audio/video frame sampling + audio extraction
+# tesseract-ocr-all: OCR. The default OCR bundle is the full EU language set
+#                    (ALL_OCR_LANGS), so 'eng' alone is NOT enough -- a non-English
+#                    PDF (e.g. Greek) fails with "Failed loading language 'ell'".
+sudo apt-get install -y poppler-utils ffmpeg tesseract-ocr tesseract-ocr-all
 ```
 
-Optional:
+Notes:
 
-- install additional Tesseract language packs if multilingual OCR is required
+- **`poppler-utils` is required** for any PDF that hits OCR or vision — without it you get
+  `Unable to get page count. Is poppler installed and in PATH?`.
+- If you don't need full multilingual OCR you can replace `tesseract-ocr-all` with just the
+  language packs you use (e.g. `tesseract-ocr-eng tesseract-ocr-ell tesseract-ocr-nld`), or
+  pass a narrower `ocr_lang` per request.
+- **Performance:** OCR runs *every* language in the bundle, so the full 24-language default
+  is ~40 s/page. Set `OCR_DEFAULT_LANGS` (e.g. `eng+ell+nld+deu+fra+spa+ita+por`) to a curated
+  subset for production — it drops OCR to a few seconds. Per-request `ocr_lang` still overrides it.
+- These are invoked as subprocesses at request time, so installing them does **not** require
+  restarting the service.
+- Verify with: `which pdfinfo pdftoppm tesseract ffmpeg` and `tesseract --list-langs`.
 
 Python setup:
 
@@ -787,7 +823,7 @@ rather than read every page.
 | --- | --- | --- | --- |
 | Text extraction (PyMuPDF) | **All pages** | none — full text feeds the deterministic heuristics | — |
 | Text LLM | head 45% / mid 25% / tail ~30% sample of the full text | `15000` chars (document path) | `_sample_text_for_llm` |
-| Vision LLM | stratified page **images** across the whole document | length-adaptive, ceiling `vision_max_pages` (default `16`) | `vision_max_pages`, `VISION_RENDER_DPI` |
+| Vision LLM | stratified page **images** across the whole document | length-adaptive, ceiling `vision_max_pages` (default `8`), hard-clamped to `VISION_MAX_PAGES_CAP` | `vision_max_pages`, `VISION_MAX_PAGES_CAP`, `VISION_RENDER_DPI` |
 | OCR fallback (scanned PDFs only) | first N pages | `ocr_max_pages` (default `5`, max `50`), DPI `220` | `ocr_max_pages`, `ocr_lang` |
 | Hard reject | — | `MAX_DOCUMENT_UNITS` pages | `MAX_DOCUMENT_UNITS=100` |
 
@@ -805,15 +841,20 @@ to the vision model is chosen length-adaptively:
 
 Pages are sampled at evenly spaced fractional positions so the **first page** (title,
 abstract, layout), the **last page** (references, appendices, back-matter), and a
-**stratified spread of the body** are always represented. Example coverage at the default
-ceiling of 16:
+**stratified spread of the body** are always represented. The per-request count is
+**clamped to `VISION_MAX_PAGES_CAP` (default 8) to match the vLLM `image:N` limit**, so
+example coverage at the default ceiling of 8:
 
 | Document length | Pages sent to vision |
 | --- | --- |
-| 8 pages | all 8 |
+| ≤8 pages | all of them |
 | 40 pages | 6 (pages 1, 9, 17, 24, 32, 40) |
-| 100 pages | 13 (pages 1, 9, 17 … 92, 100) |
-| 250 pages | 16 (capped, spread 1 → 250) |
+| 100 pages | 8 (stratified 1 → 100) |
+| 250 pages | 8 (stratified 1 → 250) |
+
+> ⚠️ `VISION_MAX_PAGES_CAP` **must equal your vLLM server's `--limit-mm-per-prompt image:N`**.
+> If the cap is higher than the server allows, the VLM rejects the request and the vision
+> call fails silently (it's caught), so the asset is classified on heuristics+text only.
 
 `VISION_RENDER_DPI` (default `150`) controls raster resolution, and only the sampled
 pages are rendered — rendering is page-by-page, so vision cost scales with the number of
@@ -848,8 +889,9 @@ pages actually used, not with document length.
 
 ### Tuning guidance (finding the sweet spot)
 
-- **Default (`vision_max_pages=16`, `VISION_RENDER_DPI=150`)** is the recommended balance
-  for mixed traffic up to 100 pages.
+- **Default (`vision_max_pages=8`, `VISION_RENDER_DPI=150`)** is the recommended balance
+  for mixed traffic up to 100 pages, and matches a vLLM `image:8` limit. To go higher you
+  must raise **both** `VISION_MAX_PAGES_CAP` **and** the server's `--limit-mm-per-prompt`.
 - **Dense, text-heavy reports** benefit more from the text path than from vision; consider
   raising the document text sample (`_sample_text_for_llm` `max_chars`, currently `15000` ≈
   6–10 dense pages) before raising vision pages.
@@ -884,8 +926,34 @@ Quick compile check:
 python3 -m py_compile app.py docint/rubrics/subcategories.py docint/rubrics/subcategory_scorer.py docint/llm/subcategory_classify.py
 ```
 
-Basic API test script:
+Smoke tests (offline — no running server, no remote LLM calls). Runs under pytest or standalone:
 
 ```bash
-python test_api.py
+python tests/test_smoke.py          # standalone, no pytest needed
+pytest tests/test_smoke.py -v       # if pytest is installed
 ```
+
+## Evaluation harness
+
+[scripts/eval_harness.py](scripts/eval_harness.py) runs every supported file under a
+folder through `POST /classify` (in-process, no server needed) and writes a CSV — one
+row per file (per provider) with category, subcategory, candidates, agriculture verdict,
+topics, intended purposes, and per-stage timings.
+
+```bash
+# every supported file in files/, provider=custom -> eval_results.csv
+python scripts/eval_harness.py
+
+# compare both providers side by side (one row per file per provider)
+python scripts/eval_harness.py --providers custom,mistral
+
+# heuristics-only, fast, no remote LLM calls
+python scripts/eval_harness.py --no-vision --no-text-llm
+
+# narrow run
+python scripts/eval_harness.py --files-dir files/Dataset --limit 5 --vision-max-pages 8 --ocr-lang eng+ell
+```
+
+`vision_max_pages` defaults to `8` to respect a VLM launched with an `image:8` limit.
+Auth is read from `DOCINT_AUTH_USERS` / `DOCINT_AUTH_PASSWORD`. Use this to measure
+**warm-path** latency and to A/B provider/model accuracy on a labelled set.

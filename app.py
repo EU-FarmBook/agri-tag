@@ -18,11 +18,19 @@ import re
 import time
 import hashlib
 import sys
+import threading
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 from dotenv import load_dotenv
+
+# Load .env BEFORE importing any docint module: several of them (mistral_provider,
+# agriculture/topics/purposes pipelines) read configuration via os.getenv at import
+# time, so the environment must be populated first. Previously load_dotenv() ran
+# after these imports, which left MISTRAL_API_KEY unset -> provider=mistral 503'd.
+load_dotenv()
+
 from fastapi import FastAPI, UploadFile, File, Query, HTTPException, Depends, Request
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import JSONResponse
@@ -93,8 +101,6 @@ from docint.fusion.intelligent_fusion import (
     convert_to_source_result
 )
 
-# Load environment variables
-load_dotenv()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VISUALISATIONS_DIR = os.path.join(BASE_DIR, "visualisations")
 
@@ -155,6 +161,14 @@ MAX_DOCUMENT_UNITS = int(os.getenv("MAX_DOCUMENT_UNITS", "100"))
 # Raw-text endpoint cap: ~10 A4 pages * ~500 words = 5000 words.
 MAX_TEXT_INPUT_WORDS = int(os.getenv("MAX_TEXT_INPUT_WORDS", "5000"))
 VISION_RENDER_DPI = int(os.getenv("VISION_RENDER_DPI", "150"))
+# Hard cap on page-images sent to the vision model in ONE request. MUST match the
+# vLLM server's --limit-mm-per-prompt image:N (default 8). The effective per-request
+# vision_max_pages is clamped to this, so no caller can exceed the VLM's limit and
+# trigger a (silently caught) rejected vision call.
+VISION_MAX_PAGES_CAP = int(os.getenv("VISION_MAX_PAGES_CAP", "8"))
+# Sampling temperature for the classification LLM calls (text + vision subtype).
+# Default 0 = deterministic/reproducible (no run-to-run flip-flopping on the same input).
+LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))
 # Surface at most 2 subcategory candidates (always the best; a second only when it
 # is a genuinely close contender within SUBCATEGORY_SECOND_GAP probability).
 SUBCATEGORY_MAX_CANDIDATES = int(os.getenv("SUBCATEGORY_MAX_CANDIDATES", "2"))
@@ -181,6 +195,14 @@ URL_DATASET_LLM_MAX_CHARS = int(os.getenv("URL_DATASET_LLM_MAX_CHARS", "6000"))
 
 # All EU languages for Tesseract OCR
 ALL_OCR_LANGS = "bul+ces+dan+deu+ell+eng+est+fin+fra+hrv+hun+ita+lav+lit+mlt+nld+pol+por+ron+slk+slv+spa+swe+gle"
+# Default OCR language bundle. The full 24-language set is correct but SLOW
+# (Tesseract runs every language -> ~40s/page). Set OCR_DEFAULT_LANGS to a curated
+# subset (e.g. "eng+ell+nld+deu+fra") in production, or pass `ocr_lang` per request.
+OCR_DEFAULT_LANGS = os.getenv("OCR_DEFAULT_LANGS", ALL_OCR_LANGS).strip() or ALL_OCR_LANGS
+# Pre-warm the shared embedding model at startup so the first request isn't the one
+# that pays the model download/load cost.
+PREWARM_EMBEDDINGS = os.getenv("PREWARM_EMBEDDINGS", "true").strip().lower() in {"1", "true", "yes"}
+EMBEDDING_MODEL_NAME = os.getenv("AGRI_EMBEDDING_MODEL", "intfloat/multilingual-e5-small").strip()
 
 # =============================================================================
 # BASIC AUTH CONFIGURATION
@@ -462,40 +484,55 @@ class MediaLlmOnlyResponse(BaseModel):
 app = FastAPI(
     title="Agri-Tag API",
     description="""
-    Agriculture-gated KO classification with explainable category-specific subtype scoring for files and URLs.
-    
-    ## Features
-    
-    * **Agriculture Relevance Gate**: Rejects non-agriculture assets before subtype classification
-    * **Multi-Category Routing**: Supports current `Document`, `Dataset`, `Image`, `Audio`, and `Video` branches
-    * **Text LLM (Qwen)**: Allowed by default for agriculture-related text-rich assets
-    * **Selective Vision LLM (InternVL)**: Triggered only when routing decides visual evidence is needed
-    * **Intelligent Fusion**: Combines heuristics and model outputs using configurable strategies
-    
-    ## Runtime Flow
-    
-    1. Run Agri Gate security screening for the incoming file or URL
-    2. Ingest the asset with a category-appropriate extractor, or extract URL text through PageSense
-    3. Assess agriculture relevance
-    4. Reject early if the content is non-agriculture
-    5. Run category-specific heuristic subtype scoring
-    6. Use text LLM for agri text-rich assets when enabled
-    7. Trigger vision only for low-confidence, visually-driven, or weak-text file cases
-    8. Fuse available sources using the selected strategy
+**Agriculture-gated knowledge-object classification** with explainable, category-specific
+subtype scoring. Accepts files, public URLs, and raw text — via the self-hosted
+(Qwen / InternVL) or **Mistral** provider (`provider=custom|mistral`).
 
-    ## Visualisations
+## Pipeline
 
-    * Subcategory graph: `/visualisations/subcategories_graph.html`
+```
+INPUT   file | url | text | audio/video
+  |
+  v
+[0] optional Agri Gate security scan            (use_agri_gate)
+[1] extract text   PyMuPDF / OCR / transcription / PageSense
+[2] category       deterministic MIME routing            -> 1 category
+[3] agriculture relevance   lexicon -> embedding -> LLM
+        |__ not agri -> SKIP  (classification_skipped + skip_reason)
+[4] KO-eligibility gate      drops job ads / tenders / events
+[5] INFERENCE (agri only):
+      - subcategory        heuristics(27 signals) + text-LLM + vision-LLM -> FUSE   (1-2)
+      - topics             lexicon + embedding  (no LLM)                            (1-3)
+      - intended_purposes  embedding + LLM                                          (1-3)
+```
 
-    ## File Type Coverage
+Engines, cheap -> expensive: deterministic code (ms) -> sentence-transformers (~100 ms)
+-> remote LLM (seconds). Vision is the heaviest stage and fires only when needed.
 
-    * Document: 4 upload types (`.pdf`, `.txt`, `.docx`, `.pptx`)
-    * Dataset: 4 upload types (`.csv`, `.tsv`, `.xlsx`, `.json`)
-    * Image: 3 upload types (`.jpg`, `.jpeg`, `.png`)
-    * Audio: 3 upload types (`.mp3`, `.wav`, `.m4a`)
-    * Video: 14 upload types
-    * Software Application: no dedicated upload file types; primarily inferred from URL content
-    """,
+## Providers (`provider=custom | mistral`)
+
+* **custom** — Qwen (text), InternVL (vision), Tesseract (OCR), Whisper (audio)
+* **mistral** — mistral-small (text), mistral-medium (vision), mistral-ocr, Voxtral
+
+## Endpoints
+
+* `POST /classify` — file upload; the only path with **OCR + vision**
+* `POST /classify-url` — public URL; text-only via PageSense
+* `POST /classify-text` — raw text snippet (≤ ~5000 words / 10 A4 pages)
+* `POST /classify-media-llm` — audio/video, transcript-first text-LLM only
+* `GET /subcategories` — subtype taxonomy + criteria
+* `GET /intended-purposes` — user-intent taxonomy
+* `GET /health` — service + model readiness (public, no auth)
+
+## File type coverage
+
+* **Document**: `.pdf` `.txt` `.docx` `.pptx`
+* **Dataset**: `.csv` `.tsv` `.xlsx` `.json`
+* **Image**: `.jpg` `.jpeg` `.png`
+* **Audio**: `.mp3` `.wav` `.m4a`
+* **Video**: 14 formats (`.mp4` `.mov` `.mkv` `.webm` …)
+* **Software Application**: no upload types; inferred from URL content only
+""",
     version="2.0.0",
     docs_url="/docs",  # Enable docs - they'll be protected by middleware
     redoc_url="/redoc",
@@ -507,6 +544,28 @@ if os.path.isdir(VISUALISATIONS_DIR):
         StaticFiles(directory=VISUALISATIONS_DIR, html=False),
         name="visualisations",
     )
+
+
+@app.on_event("startup")
+def _prewarm_embeddings() -> None:
+    """Load the shared embedding model in the background at boot.
+
+    Runs in a daemon thread so the server starts serving immediately while the
+    model (used by the agriculture, topics, and intended-purpose stages) loads
+    once in the background — keeping the first real request off the cold path.
+    """
+    if not PREWARM_EMBEDDINGS:
+        return
+
+    def _warm() -> None:
+        try:
+            from docint.embedding.shared import prewarm_embedding_model
+
+            prewarm_embedding_model(EMBEDDING_MODEL_NAME, device="cpu")
+        except Exception:
+            pass
+
+    threading.Thread(target=_warm, daemon=True, name="embedding-prewarm").start()
 
 
 # =============================================================================
@@ -1368,13 +1427,16 @@ def _infer_intended_purposes_response(
 ) -> Optional[IntendedPurposeInference]:
     """Infer up to 3 intended purposes (user intents). Never raises.
 
-    The LLM stage is used only when the text LLM is enabled, configured, and the
-    asset is agriculture-related (so a doc about to be skipped does not pay for an
-    LLM call); otherwise it falls back to the always-on embedding stage.
+    Gated on agriculture relevance, exactly like topics: a non-agriculture asset
+    is skipped, so we emit no purposes for it (and pay for neither the embedding
+    nor the LLM stage). When the asset is agriculture-related, the LLM stage is
+    used if the text LLM is enabled/configured, otherwise the embedding stage.
     """
+    if not getattr(agri_relevance, "is_agriculture_related", False):
+        return None
     if not text or len(text.strip()) < TOPIC_MIN_CHARS:
         return None
-    use_llm = bool(use_text_llm and llm_configured and getattr(agri_relevance, "is_agriculture_related", False))
+    use_llm = bool(use_text_llm and llm_configured)
     llm_config = {"base_url": llm_base_url, "api_key": llm_api_key, "model": llm_model} if use_llm else None
     try:
         result = infer_intended_purposes(text, max_results=3, use_llm=use_llm, llm_config=llm_config)
@@ -1668,7 +1730,7 @@ def classify_url_text(
                     api_key=LLM_API_KEY,
                     model=LLM_MODEL,
                     max_chars=URL_TEXT_LLM_MAX_CHARS,
-                    temperature=0.2,
+                    temperature=LLM_TEMPERATURE,
                 )
                 software_text_source = convert_to_source_result(
                     subcategory_key=llm_res.subcategory_key,
@@ -1811,7 +1873,7 @@ def classify_url_text(
                     api_key=LLM_API_KEY,
                     model=LLM_MODEL,
                     max_chars=URL_DATASET_LLM_MAX_CHARS,
-                    temperature=0.2,
+                    temperature=LLM_TEMPERATURE,
                 )
                 dataset_text_source = convert_to_source_result(
                     subcategory_key=llm_res.subcategory_key,
@@ -2002,7 +2064,7 @@ def classify_url_text(
                 api_key=LLM_API_KEY,
                 model=LLM_MODEL,
                 max_chars=URL_TEXT_LLM_MAX_CHARS,
-                temperature=0.2,
+                temperature=LLM_TEMPERATURE,
             )
             text_source = convert_to_source_result(
                 subcategory_key=llm_res.subcategory_key,
@@ -2120,8 +2182,8 @@ def classify_document(
     vision_trigger_threshold: float = 0.6,
     candidate_gap_threshold: float = 0.12,
     fusion_strategy: str = "adaptive",
-    vision_max_pages: int = 16,
-    ocr_lang: str = ALL_OCR_LANGS,
+    vision_max_pages: int = 8,
+    ocr_lang: str = OCR_DEFAULT_LANGS,
     ocr_max_pages: int = 10,
     provider: str = "custom",
 ) -> ClassificationResponse:
@@ -2157,6 +2219,11 @@ def classify_document(
     use_mistral = provider == "mistral"
     (LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, LLM_CONFIGURED,
      VISION_LLM_BASE_URL, VISION_LLM_API_KEY, VISION_LLM_MODEL, _vision_configured) = _resolve_llm_config(provider)
+
+    # Never send more page-images than the vision server accepts in one request
+    # (vLLM --limit-mm-per-prompt image:N). Clamp here so every downstream vision call
+    # (document pages + video frames) is bounded regardless of the requested value.
+    vision_max_pages = max(1, min(vision_max_pages, VISION_MAX_PAGES_CAP))
 
     start_time = time.time()
     stage_timings_ms: Dict[str, float] = {}
@@ -2289,7 +2356,7 @@ def classify_document(
                 api_key=LLM_API_KEY,
                 model=LLM_MODEL,
                 max_chars=15000,
-                temperature=0.2,
+                temperature=LLM_TEMPERATURE,
             )
             combined_is_agri = bool(combined.raw_json.get("is_agriculture_related", agri_relevance.is_agriculture_related))
             try:
@@ -2370,6 +2437,65 @@ def classify_document(
     )
     stage_timings_ms["intended_purposes_ms"] = round((time.time() - _purpose_start) * 1000, 2)
 
+    # KO-eligibility gate (file path): drop agriculture-related but NON-eligible
+    # knowledge objects (job vacancies, tenders, event/call-for-applications notices)
+    # before any subtype scoring — mirrors the URL path, which already does this.
+    _elig_start = time.time()
+    eligibility_result = _assess_ko_eligibility(
+        text=asset.text,
+        use_text_llm=use_text_llm,
+        llm_base_url=LLM_BASE_URL,
+        llm_api_key=LLM_API_KEY,
+        llm_model=LLM_MODEL,
+        llm_configured=LLM_CONFIGURED,
+    )
+    stage_timings_ms["ko_eligibility_ms"] = round((time.time() - _elig_start) * 1000, 2)
+    if agriculture_response.is_agriculture_related and not eligibility_result["is_eligible"]:
+        processing_time_ms = (time.time() - start_time) * 1000
+        exclusion_label = (eligibility_result.get("exclusion_type") or "ineligible_content").replace("_", " ")
+        return ClassificationResponse(
+            best_match=None,
+            all_candidates=[],
+            fusion=None,
+            heuristics=None,
+            vision_llm=None,
+            text_llm=None,
+            category_used=category_result.category,
+            category_inference=None,
+            agriculture_relevance=agriculture_response,
+            topics=topics_response,
+            intended_purposes=intended_purposes_response,
+            classification_skipped=True,
+            skip_reason=f"Agriculture-related but not an eligible knowledge object: {exclusion_label}",
+            total_candidates=0,
+            confidence_threshold_met=False,
+            document_info={
+                "filename": filename,
+                "pages": asset.units,
+                "unit_label": asset.unit_label,
+                "asset_type": asset.asset_type,
+                "inferred_category": category_result.category,
+                "source": asset.source,
+                "text_length": len(asset.text),
+                "text_quality": {
+                    "chars": quality.metrics.get("chars"),
+                    "letters": quality.metrics.get("letters"),
+                    "letter_ratio": quality.metrics.get("letter_ratio"),
+                    "ok": quality.ok,
+                } if hasattr(quality, "metrics") else None,
+            },
+            processing_info={
+                "processing_time_ms": round(processing_time_ms, 2),
+                "ocr_used": asset.source == "ocr",
+                "sources_used": [],
+                "fusion_enabled": False,
+                "require_agriculture": require_agriculture,
+                "auto_route_models": auto_route_models,
+                "eligibility_gate": eligibility_result,
+                "stage_timings_ms": stage_timings_ms,
+            },
+        )
+
     if category_result.category == "Image":
         stage_start = time.time()
         unified_image_candidates, unified_image_best = _build_unified_candidates(
@@ -2393,7 +2519,7 @@ def classify_document(
                     base_url=VISION_LLM_BASE_URL,
                     api_key=VISION_LLM_API_KEY,
                     model=VISION_LLM_MODEL,
-                    temperature=0.2,
+                    temperature=LLM_TEMPERATURE,
                 )
                 image_unified_key = vlm_res.get("subcategory")
                 image_vision_result = {
@@ -2586,7 +2712,7 @@ def classify_document(
                     api_key=LLM_API_KEY,
                     model=LLM_MODEL,
                     max_chars=12000,
-                    temperature=0.2,
+                    temperature=LLM_TEMPERATURE,
                 )
                 video_text_source = convert_to_source_result(
                     subcategory_key=llm_res.subcategory_key,
@@ -2620,7 +2746,7 @@ def classify_document(
                         base_url=VISION_LLM_BASE_URL,
                         api_key=VISION_LLM_API_KEY,
                         model=VISION_LLM_MODEL,
-                        temperature=0.2,
+                        temperature=LLM_TEMPERATURE,
                     )
                     video_vision_result = {
                         "subcategory_key": vlm_res.get("subcategory"),
@@ -2985,7 +3111,7 @@ def classify_document(
                     api_key=LLM_API_KEY,
                     model=LLM_MODEL,
                     max_chars=12000,
-                    temperature=0.2,
+                    temperature=LLM_TEMPERATURE,
                 )
                 audio_text_source = convert_to_source_result(
                     subcategory_key=llm_res.subcategory_key,
@@ -3137,7 +3263,7 @@ def classify_document(
                     api_key=LLM_API_KEY,
                     model=LLM_MODEL,
                     max_chars=12000,
-                    temperature=0.2,
+                    temperature=LLM_TEMPERATURE,
                 )
                 dataset_text_source = convert_to_source_result(
                     subcategory_key=llm_res.subcategory_key,
@@ -3290,7 +3416,7 @@ def classify_document(
                     api_key=LLM_API_KEY,
                     model=LLM_MODEL,
                     max_chars=12000,
-                    temperature=0.2,
+                    temperature=LLM_TEMPERATURE,
                 )
                 software_text_source = convert_to_source_result(
                     subcategory_key=llm_res.subcategory_key,
@@ -3567,7 +3693,7 @@ def classify_document(
                 api_key=LLM_API_KEY,
                 model=LLM_MODEL,
                 max_chars=15000,
-                temperature=0.2,
+                temperature=LLM_TEMPERATURE,
             )
 
             text_source = convert_to_source_result(
@@ -3617,7 +3743,7 @@ def classify_document(
                 api_key=VISION_LLM_API_KEY,
                 model=VISION_LLM_MODEL,
                 max_total_pages=vision_max_pages,
-                temperature=0.2,
+                temperature=LLM_TEMPERATURE,
                 dpi=VISION_RENDER_DPI,
             )
             
@@ -3940,10 +4066,10 @@ async def classify_endpoint(
         description="Fusion strategy: weighted, adaptive, agreement, cascade"
     ),
     vision_max_pages: int = Query(
-        16,
+        8,
         ge=1,
         le=24,
-        description="Ceiling on representative pages sampled for vision analysis; the actual count is chosen length-adaptively up to this ceiling, sampled deterministically across the whole document rather than scanning every page"
+        description="Ceiling on page-images sent to the vision model per request; chosen length-adaptively up to this value and clamped server-side to VISION_MAX_PAGES_CAP (must match the vLLM image:N limit, default 8)"
     ),
     ocr_lang: Optional[str] = Query(
         None,
@@ -4077,7 +4203,7 @@ async def classify_endpoint(
             candidate_gap_threshold=candidate_gap_threshold,
             fusion_strategy=fusion_strategy,
             vision_max_pages=vision_max_pages,
-            ocr_lang=ocr_lang or ALL_OCR_LANGS,
+            ocr_lang=ocr_lang or OCR_DEFAULT_LANGS,
             ocr_max_pages=ocr_max_pages,
             provider=provider,
         )
@@ -4180,7 +4306,7 @@ async def classify_media_llm_endpoint(
     file: UploadFile = File(..., description="Audio or video asset to classify through transcript-first text LLM only"),
     top_k_candidates: int = Query(5, ge=1, le=10, description="Maximum number of ranked subtype candidates returned"),
     include_transcript: bool = Query(False, description="If true, include the full recovered transcript in the response"),
-    temperature: float = Query(0.2, ge=0.0, le=1.0, description="Sampling temperature for transcript-first text LLM classification"),
+    temperature: float = Query(0.0, ge=0.0, le=1.0, description="Sampling temperature for transcript-first text LLM classification (0 = deterministic)"),
     max_chars: int = Query(12000, ge=1000, le=24000, description="Maximum transcript characters sent to the text LLM"),
     provider: ProviderChoice = Query(ProviderChoice.custom, description="Provider for transcription + text LLM: 'custom' (Whisper + self-hosted LLM) or 'mistral' (Voxtral + Mistral LLM)"),
 ):

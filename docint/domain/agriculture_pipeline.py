@@ -48,6 +48,17 @@ AGRI_ENABLE_LLM_FALLBACK = os.getenv("AGRI_ENABLE_LLM_FALLBACK", "true").strip()
 EMBEDDING_TEXT_LIMIT = int(os.getenv("AGRI_EMBEDDING_TEXT_LIMIT", "3500"))
 EMBEDDING_OVERRIDE_THRESHOLD = float(os.getenv("AGRI_EMBEDDING_OVERRIDE_THRESHOLD", "0.74"))
 EMBEDDING_BLEND_WEIGHT = float(os.getenv("AGRI_EMBEDDING_BLEND_WEIGHT", "0.45"))
+# Stage-3 agriculture LLM only fires when the lexicon+embedding result is genuinely
+# ambiguous. These bounds are configurable so the (expensive) LLM call can be trimmed:
+#  - inside [LOW, HIGH] = genuinely uncertain -> ask the LLM
+#  - in [FLOOR, LOW) with substantive text   = weak-but-possible -> ask the LLM (rescue)
+#  - below FLOOR                             = confidently non-agriculture -> DO NOT ask
+# Raising FLOOR cuts LLM calls on clearly non-agri docs (faster) at some recall risk;
+# tune against the eval set. (Previously FLOOR was effectively 0 -> the LLM fired on
+# almost every substantive document.)
+AGRI_LLM_CONF_LOW = float(os.getenv("AGRI_LLM_CONF_LOW", "0.3"))
+AGRI_LLM_CONF_HIGH = float(os.getenv("AGRI_LLM_CONF_HIGH", "0.7"))
+AGRI_LLM_LOWCONF_FLOOR = float(os.getenv("AGRI_LLM_LOWCONF_FLOOR", "0.1"))
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AGRICULTURE_RUNTIME_DIR = REPO_ROOT / "data_model" / "runtime" / "agriculture"
 BUCKET_CENTROID_PATH = AGRICULTURE_RUNTIME_DIR / "bucket_centroids.npz"
@@ -63,11 +74,10 @@ def _embedding_available() -> bool:
     return bool(AGRI_EMBEDDING_MODEL and importlib.util.find_spec("sentence_transformers"))
 
 
-@lru_cache(maxsize=1)
 def _load_embedding_model():
-    from sentence_transformers import SentenceTransformer
+    from docint.embedding.shared import get_embedding_model
 
-    return SentenceTransformer(AGRI_EMBEDDING_MODEL, device="cpu")
+    return get_embedding_model(AGRI_EMBEDDING_MODEL, device="cpu")
 
 
 def _truncate_text(text: str) -> str:
@@ -259,7 +269,10 @@ def assess_agriculture_relevance_staged(
                 )
             )
 
-    still_ambiguous = 0.3 <= final_confidence <= 0.7 or (final_confidence < 0.3 and substantive_text)
+    still_ambiguous = (
+        (AGRI_LLM_CONF_LOW <= final_confidence <= AGRI_LLM_CONF_HIGH)
+        or (AGRI_LLM_LOWCONF_FLOOR <= final_confidence < AGRI_LLM_CONF_LOW and substantive_text)
+    )
     needs_llm_decision = False
     if still_ambiguous and allow_llm_fallback and AGRI_ENABLE_LLM_FALLBACK and llm_config and defer_llm:
         # Defer Stage 3: the caller will run one combined agri+subtype LLM call.

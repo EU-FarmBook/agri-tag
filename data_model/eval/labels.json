@@ -1,0 +1,622 @@
+{
+  "version": "doc_subcategory_labels_v1",
+  "note": "agreement = both providers concurred (bootstrap); manual = hand-judged from page-1 vs subtype definitions",
+  "labels": {
+    "1 Detail-ING-Bankieren_5248xxxxxxxx7486_10-May-2026_jddx841nhc.pdf": {
+      "expected": "SKIP",
+      "source": "agreement"
+    },
+    "1 PT_09-PA_EN.pdf": {
+      "expected": "Case Studies & Practice Stories",
+      "source": "manual"
+    },
+    "1 PhD vacancy_ Safeguard_UWUE.pdf": {
+      "expected": "SKIP",
+      "source": "agreement"
+    },
+    "1 XΕΙΜΕΡΙΝΑ 2026.pdf": {
+      "expected": "SKIP",
+      "source": "agreement"
+    },
+    "1-10 6_Policy-Brief_Lake-Constance_DE.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "1-s2.0-S0956053X19301758-main-1.pdf": {
+      "expected": "SKIP",
+      "source": "agreement"
+    },
+    "1-s2.0-S1359835X20304103-main.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "1-s2.0-S2211912422000384-main.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "10_Policy-Brief_Northernt-Greece_GR.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "11Policy-Brief_Trikala_GR.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "12_Policy-Brief_Adriatic-Region_HR.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "12_UCO_Aldeas-Abandonadas_fv.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "13-Policy-Briefs_Apennine-Region_IT.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "14_Policy-Brief_Tuscany_IT.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "15-Policy-Brief_Andalucia_ES.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "16_Policy-Brief_Aragon_ES.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "17-Policy-Brief_New-Aquitaine_FR.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "18-Policy-Brief_Burgundy-Franche-Comte_FR.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "19_Policy-Brief_Scotland_GB.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "1_Policy-Brief_Oosterwold_NL.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "1_UNIPI_Rural4Learning_fv.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "1_phos4you-euphore.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "2018_Article_SYSTEMIC_Ingenta.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "20211207_LTVRA_RuralDigitalisationForum.pdf": {
+      "expected": "Talks, Lectures & Webinars",
+      "source": "manual"
+    },
+    "20220119_DESIRA-General-Assembly-003-rev-ma_compressed.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "20220316-DELGADO-LTVRA.pdf": {
+      "expected": "Talks, Lectures & Webinars",
+      "source": "manual"
+    },
+    "20_Policy-Brief_West-Flanders_BE.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "21_Policy-Brief_Cloughjordan_IE.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "26_AMIGO_Agricolus_fv.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "27_WR_Groenmonitor_fv.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "2_Policy-Brief_Central-Ostrobthnia_FI.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "2_UNIPI_App-for-electrified-fence-fv.pdf": {
+      "expected": "How-To Guides",
+      "source": "agreement"
+    },
+    "2_fycocyanine_extractie.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "2_phos4you-tetraphos.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "36_UL_SatAgro_fv.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "37_ILVO_iFarming_fv.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "38_ILVO_Farmcafe_fv.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "manual"
+    },
+    "3_DESIRA_Dominic.pdf": {
+      "expected": "Talks, Lectures & Webinars",
+      "source": "manual"
+    },
+    "3_HUTTON_Ritchie_beef_monitoring_fv.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "3_fycocyanine_toegepast_bij_textiel.pdf": {
+      "expected": "SKIP",
+      "source": "agreement"
+    },
+    "3_phos4you-pulse.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "40_ILVO_RFID-for-Pigs_fv.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "41-50 WP4.-National-Policy-Framework-Analysis_France.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "manual"
+    },
+    "42_UJYV_Biomass_atlas_fv.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "manual"
+    },
+    "43_INRA_Treemetrics_fv.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "manual"
+    },
+    "44_INRA_XAG_Drones_fv.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "manual"
+    },
+    "45_ATHENA_INNOSETA_fv.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "46_ATHENA_FARM_Machine_Interoperability_fv.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "manual"
+    },
+    "47_ATHENA_SQAPP_fv.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "manual"
+    },
+    "48_ATHENA_WAZIUP_fv.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "manual"
+    },
+    "4_DESIRA-FabioBartolini.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "4_HUTTON_HandsFreeHectare_fv.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "manual"
+    },
+    "4_fycocyanine_toegepast_bij_papier.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "4_phos4you-microalgae.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "51_PEFC_TRACE_fv.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "manual"
+    },
+    "5_Agriculture_CynthiaGiagnocavo.pdf": {
+      "expected": "Talks, Lectures & Webinars",
+      "source": "agreement"
+    },
+    "5_DESIRA-JRC_Maciej-Foresight.pdf": {
+      "expected": "Talks, Lectures & Webinars",
+      "source": "agreement"
+    },
+    "5_Forestry_MoniaSantini.pdf": {
+      "expected": "Talks, Lectures & Webinars",
+      "source": "agreement"
+    },
+    "5_Policy-Brief_Latvia_LV.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "5_Rural_EmilijaStojmenova.pdf": {
+      "expected": "Talks, Lectures & Webinars",
+      "source": "manual"
+    },
+    "5_phos4you-filtraphos.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "5_spirulina_en_fycocyanine_in_voeding.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "6_DESIRA_SabrinaArcuri_SHERPA.pdf": {
+      "expected": "Talks, Lectures & Webinars",
+      "source": "agreement"
+    },
+    "6_FIBLAutomatedMilkingSystem_fv.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "6_Policy-Brief_Lake-Constance_DE.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "7_FiBL_HoeingRobot_fv.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "7_phos4you-struvia_downscaling.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "7_teelthandleiding_eendenkroos.pdf": {
+      "expected": "How-To Guides",
+      "source": "agreement"
+    },
+    "9-DESIRA_Leanne_ScottishLL.pdf": {
+      "expected": "Case Studies & Practice Stories",
+      "source": "manual"
+    },
+    "9_Policy-Brief_Switzerland_CH.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "ANDREOLA_abstract_sum2022.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "AgData-Desira-meeting-26-1.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "Akinson2024.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "Anaerobic-digestion-brochure-1.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "Biorefine-Cluster-News-Bulletin-March-April-2024.pdf": {
+      "expected": "SKIP",
+      "source": "agreement"
+    },
+    "Briefing_Digital-Game-Changers.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "Briefing_Digital-Transformation.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "Briefing_Digitalisation-in-Europe.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "Briefing_SESI.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "Briefing_Socio-Cyber-Physical-Systems.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "Briefing_Taxonomy.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "D-7.2-Data-Management-Plan-2019-v-0.4.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "D4.11-Policy-Brief-Boosting-Mineral-Recovery-Circular-Economy.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "D4.8_Systemic-workshop-2-report.pdf": {
+      "expected": "SKIP",
+      "source": "agreement"
+    },
+    "D42-First-pilot-scale-products-produced-and-delivered-to-industrial-end-users-for-analysis-and-market-test.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "DESIRA-Press-release_KoM-20190909.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "DESIRA-_-WP4-1.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "manual"
+    },
+    "DESIRA-webinar-sustainable-digitalisation_final-Agenda-WEB.pdf": {
+      "expected": "SKIP",
+      "source": "agreement"
+    },
+    "DESIRA_Boosting-sustainable-digitalisation_webinar_highlights.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "manual"
+    },
+    "DESIRA_LTVRA_Agriculture_fv.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "manual"
+    },
+    "DESIRA_LTVRA_Forestry_fv.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "manual"
+    },
+    "DESIRA_LTVRA_General_fv.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "manual"
+    },
+    "DESIRA_LTVRA_Rural_fv.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "DESIRA_RDF-2nd-meeting_Highlights.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "DESIRA_RDF_Workshop2.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "manual"
+    },
+    "DESIRA_article_philip-moore_ofn.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "DESIRA_article_rijswijk_digitisation.pdf": {
+      "expected": "Explainers",
+      "source": "agreement"
+    },
+    "DESIRA_article_smart-farming.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "DESIRA_general-assembly_press-release_200515.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "DESIRA_steering-committee_press-release.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "Data_DGAGRI_220126_v3.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "Doc1.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "ECOMONDO_ELLIPSE-Digital-Poster.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "ESNI-2024-Laure-Baillargeon-presentation.pdf": {
+      "expected": "Talks, Lectures & Webinars",
+      "source": "agreement"
+    },
+    "EU-research-projects-Joint-Feedback-on-amendmend-ND-annex-II-RENURE.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "Factsheet-ammonium-water.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "Factsheet-product-liquid-fraction-digestate.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "Factsheet_AmPower.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "Factsheet_Benas.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "Factsheet_Groot-Zevert-Vergisting.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "Factsheet_Waterleau-New-Energy.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "Final-Published-Properties-of-RDF.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "Joint-position-on-status-of-AS-and-implementation-of-ReNure-FINAL-1.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "Joint-position-on-status-of-AS-and-implementation-of-ReNure_FINAL_June2022.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "Kent-Wildlife-Trust_Grassification_Performance-Contracting_Short-Summary.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "LivingLab_UnkrautmanagementBiogemusebau_Zusammenfassung.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "manual"
+    },
+    "Membrane-based-system-brochure-1.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "OLEAF4VALUE-final-project-press-release_EN.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "OLEAF4VALUE_2press-release-EN.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "Policy-Recommendation-by-European-Research-projects-RENURE-May-2025-.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "Presentazione_AdvisoryBoard_26012022.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "ReNu2Cycle-Feedback-on-processed-manure-as-CMC-10-draft-text.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "Systemic-AS-Product-V04.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "Systemic-Mineral-Concentrate-V04.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "agriwastevalue_Energy-fertilizer.pdf": {
+      "expected": "Case Studies & Practice Stories",
+      "source": "agreement"
+    },
+    "annex_1_protocol_n_dynamics_lab_ughent_1.pdf": {
+      "expected": "How-To Guides",
+      "source": "agreement"
+    },
+    "annex_3_protocol_nfrv_pot_ughent.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "annex_5a_protocol_pfrv_pot_arvalis_3_nonames_accepted.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "annex_8_protocol_n_losses_field_nmi.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "biorefine-recovery_of_phosphorus_from_organic_wastes.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "biorefine_ammonia_stripping_and_scrubbing_ugent_wp3_a9.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "biorefine_flyer_large_scale_application.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "biorefine_flyer_n2o_mineral_concentrates.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "biorefine_flyer_nh3_mineral_concentrates.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "biorefine_flyer_pot_experiment.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "biorefine_p-recovery.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "biorefine_position_paper_on_the_fertilizer_regulation_revision-1.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "brochure_grassification_final_version_2.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "deliverable-ALGSafety-Analysis.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "factsheet-product-ammonium-nitrate-final-22052018.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "factsheet-product-ammonium-sulphate-final-22052018.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "factsheet-product-mineral-concentrate-final-22052018.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "factsheet-product-struvite-final-23052018.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "fnut-08-695793.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    },
+    "h2020_run4life_factsheet_-_technology_anaerobic_membrane_bioreactor.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "h2020_run4life_factsheet_-_technology_bes.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "h2020_run4life_factsheet_-_technology_uasb_general.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "h2020_run4life_factsheet_-_technology_vacuum_toilet.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "newsletter_march_2020.pdf": {
+      "expected": "SKIP",
+      "source": "agreement"
+    },
+    "policy_meeting_key_messages_and_conclusions_final_0.pdf": {
+      "expected": "Policy & Governance Content",
+      "source": "agreement"
+    },
+    "pr_manuresource2015_oct_2015.pdf": {
+      "expected": "SKIP",
+      "source": "agreement"
+    },
+    "press_release_manuresource2017_dec2017_final_eng.pdf": {
+      "expected": "Summaries, Factsheets & Outreach",
+      "source": "agreement"
+    },
+    "reusewaste_poster.pdf": {
+      "expected": "Project & Deliverable Reports",
+      "source": "agreement"
+    },
+    "valorisation_of_agricultural_wastewater_streams_by_producing_duckweed.pdf": {
+      "expected": "Technical & Research Content",
+      "source": "agreement"
+    }
+  }
+}

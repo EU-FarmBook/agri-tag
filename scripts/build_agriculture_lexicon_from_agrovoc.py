@@ -18,7 +18,10 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
 
-DEFAULT_ALLOWED_LANGS = ("en", "fr", "de", "es", "it", "el", "nl")
+DEFAULT_ALLOWED_LANGS = (
+    "bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "ga", "hr",
+    "hu", "it", "lt", "lv", "mt", "nl", "pl", "pt", "ro", "sk", "sl", "sv",
+)
 DEFAULT_BUCKET_RULES = {
     "farming_systems": [
         "agriculture",
