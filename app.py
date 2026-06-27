@@ -72,6 +72,7 @@ from docint.category.infer import infer_category, infer_file_category, infer_url
 from docint.topics.infer import infer_topics
 from docint.purposes.infer import infer_intended_purposes
 from docint.ingest.dispatcher import ingest_asset, SUPPORTED_DOCUMENT_EXTENSIONS
+from docint.ingest.archive import ARCHIVE_UPLOAD_EXTENSIONS, extract_supported_archive
 from docint.ingest.unit_limits import inspect_document_units
 from docint.video.extract import media_duration_seconds, sample_video_frames, transcribe_video_audio
 from docint.integrations.agrigate import scan_file as agrigate_scan_file, scan_url as agrigate_scan_url
@@ -105,12 +106,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VISUALISATIONS_DIR = os.path.join(BASE_DIR, "visualisations")
 
 SUPPORTED_FILE_TYPES_BY_CATEGORY: Dict[str, List[str]] = {
-    "Document": [".pdf", ".txt", ".docx", ".pptx"],
-    "Dataset": [".csv", ".tsv", ".xlsx", ".json"],
+    "Document": [".pdf", ".txt", ".doc", ".docx", ".ppt", ".pptx"],
+    "Dataset": [".csv", ".tsv", ".xls", ".xlsx", ".json"],
     "Image": [".jpg", ".jpeg", ".png"],
     "Audio": [".mp3", ".wav", ".m4a"],
     "Video": [".mp4", ".avi", ".mov", ".wmv", ".mpeg", ".mpg", ".mkv", ".flv", ".webm", ".3gp", ".mts", ".m2ts", ".vob", ".rmvb"],
     "Software Application": [],
+    "Archive Bundle": [".zip", ".tar", ".rar"],
 }
 
 URL_SUFFIX_HINTS_BY_CATEGORY: Dict[str, List[str]] = {
@@ -497,11 +499,12 @@ subtype scoring. Accepts files, public URLs, and raw text — via the self-hoste
 
 | Category | Upload extensions |
 | --- | --- |
-| **Document** | `.pdf` · `.txt` · `.docx` · `.pptx` |
-| **Dataset** | `.csv` · `.tsv` · `.xlsx` · `.json` |
+| **Document** | `.pdf` · `.txt` · `.doc` · `.docx` · `.ppt` · `.pptx` |
+| **Dataset** | `.csv` · `.tsv` · `.xls` · `.xlsx` · `.json` |
 | **Image** | `.jpg` · `.jpeg` · `.png` |
 | **Audio** | `.mp3` · `.wav` · `.m4a` |
 | **Video** | `.mp4` · `.avi` · `.mov` · `.wmv` · `.mpeg` · `.mpg` · `.mkv` · `.flv` · `.webm` · `.3gp` · `.mts` · `.m2ts` · `.vob` · `.rmvb` |
+| **Archive Bundle** | `.zip` · `.tar` · `.rar` |
 | **Software Application** | no upload types — inferred from URL content only |
 """,
     version="2.0.0",
@@ -4061,12 +4064,14 @@ async def classify_endpoint(
         raise HTTPException(status_code=503, detail="Mistral provider selected but MISTRAL_API_KEY is not configured.")
     filename = file.filename or "unknown.pdf"
     suffix = os.path.splitext(filename)[1].lower()
-    document_suffixes = {".pdf", ".txt", ".docx", ".pptx"}
+    document_suffixes = {".pdf", ".txt", ".doc", ".docx", ".ppt", ".pptx"}
     audio_suffixes = {".mp3", ".wav", ".m4a"}
     video_suffixes = {".mp4", ".avi", ".mov", ".wmv", ".mpeg", ".mpg", ".mkv", ".flv", ".webm", ".3gp", ".mts", ".m2ts", ".vob", ".rmvb"}
+    archive_suffix = get_archive_suffix(filename)
+    is_archive_upload = archive_suffix in ARCHIVE_UPLOAD_EXTENSIONS
     content_length = request.headers.get("content-length")
 
-    if suffix not in SUPPORTED_DOCUMENT_EXTENSIONS:
+    if suffix not in SUPPORTED_DOCUMENT_EXTENSIONS and not is_archive_upload:
         blocked_suffix = get_blocked_suffix(filename)
         if blocked_suffix:
             raise HTTPException(
@@ -4118,6 +4123,7 @@ async def classify_endpoint(
         )
     
     tmp_path = None
+    archive_extract_dir = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix or ".bin") as tmp:
             tmp_path = tmp.name
@@ -4146,6 +4152,91 @@ async def classify_endpoint(
                 strict=AGRI_GATE_FILE_STRICT,
                 source_label="file",
             )
+
+        if is_archive_upload:
+            try:
+                archive = extract_supported_archive(tmp_path, filename)
+                archive_extract_dir = archive.extract_dir
+            except ValueError as exc:
+                message = str(exc)
+                status = 413 if "too many" in message or "expands to" in message else 415
+                raise HTTPException(status_code=status, detail=message)
+            except RuntimeError as exc:
+                raise HTTPException(status_code=422, detail=str(exc))
+
+            archive_results = []
+            for inner_path, inner_name in archive.supported_files:
+                inner_suffix = os.path.splitext(inner_name)[1].lower()
+                if inner_suffix in document_suffixes:
+                    unit_info = inspect_document_units(inner_path, inner_name)
+                    if unit_info.available and unit_info.units is not None and unit_info.units > MAX_DOCUMENT_UNITS:
+                        raise HTTPException(
+                            status_code=413,
+                            detail=(
+                                f"Archive member {inner_name!r} is too large ({unit_info.units} {unit_info.unit_label}). "
+                                f"Maximum allowed is {MAX_DOCUMENT_UNITS} {unit_info.unit_label} for synchronous classification."
+                            ),
+                        )
+                if inner_suffix in audio_suffixes | video_suffixes:
+                    duration_sec = media_duration_seconds(inner_path)
+                    max_duration_sec = MAX_AUDIO_DURATION_SEC if inner_suffix in audio_suffixes else MAX_VIDEO_DURATION_SEC
+                    if duration_sec and duration_sec > max_duration_sec:
+                        raise HTTPException(
+                            status_code=413,
+                            detail=(
+                                f"Archive member {inner_name!r} duration too long "
+                                f"({round(duration_sec, 1)} seconds). Maximum allowed is {max_duration_sec} seconds."
+                            ),
+                        )
+                archive_results.append(
+                    classify_document(
+                        file_path=inner_path,
+                        filename=inner_name,
+                        upload_content_type=None,
+                        require_agriculture=require_agriculture,
+                        auto_route_models=auto_route_models,
+                        use_vision=use_vision,
+                        use_text_llm=use_text_llm,
+                        heuristics_alpha=heuristics_alpha,
+                        classification_confidence_threshold=classification_confidence_threshold,
+                        vision_trigger_threshold=vision_trigger_threshold,
+                        candidate_gap_threshold=candidate_gap_threshold,
+                        fusion_strategy=fusion_strategy,
+                        vision_max_pages=vision_max_pages,
+                        ocr_lang=ocr_lang or OCR_DEFAULT_LANGS,
+                        ocr_max_pages=ocr_max_pages,
+                        provider=provider,
+                    )
+                )
+
+            def _archive_result_score(item: ClassificationResponse) -> float:
+                return float(item.best_match.confidence) if item.best_match else 0.0
+
+            result = max(archive_results, key=_archive_result_score)
+            archive_items = []
+            for inner_result in archive_results:
+                archive_items.append({
+                    "filename": inner_result.document_info.get("filename"),
+                    "category_used": inner_result.category_used,
+                    "classification_skipped": inner_result.classification_skipped,
+                    "skip_reason": inner_result.skip_reason,
+                    "best_match": inner_result.best_match.model_dump() if inner_result.best_match else None,
+                    "confidence_threshold_met": inner_result.confidence_threshold_met,
+                })
+            result.document_info["source_archive"] = filename
+            result.processing_info["security_gate"] = agri_gate_payload
+            result.processing_info["source_mode"] = "archive"
+            result.processing_info["archive"] = {
+                "filename": filename,
+                "archive_type": archive.archive_type,
+                "total_files": archive.total_files,
+                "supported_files": len(archive.supported_files),
+                "skipped_files": archive.skipped_files,
+                "total_extracted_bytes": archive.total_extracted_bytes,
+                "selected_result_filename": result.document_info.get("filename"),
+                "items": archive_items,
+            }
+            return _prepare_response(result, debug=debug)
 
         if suffix in audio_suffixes | video_suffixes:
             duration_sec = media_duration_seconds(tmp_path)
@@ -4188,6 +4279,11 @@ async def classify_endpoint(
         if tmp_path and os.path.exists(tmp_path):
             try:
                 os.remove(tmp_path)
+            except Exception:
+                pass
+        if archive_extract_dir and os.path.isdir(archive_extract_dir):
+            try:
+                shutil.rmtree(archive_extract_dir)
             except Exception:
                 pass
 

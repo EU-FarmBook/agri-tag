@@ -92,6 +92,20 @@ def infer_file_category(asset: IngestedAsset, upload_content_type: str | None = 
             rationale=f"File MIME {mime or asset.mime_type} is routed as Video",
         )
 
+    asset_type = (asset.asset_type or "").lower().lstrip(".")
+    if asset_type in {"csv", "tsv", "xls", "xlsx", "json"}:
+        return CategoryInferenceResult(
+            category="Dataset",
+            confidence=0.96,
+            rationale=f"File extension .{asset_type} is routed as Dataset",
+        )
+    if asset_type in {"pdf", "txt", "doc", "docx", "ppt", "pptx"}:
+        return CategoryInferenceResult(
+            category="Document",
+            confidence=0.96,
+            rationale=f"File extension .{asset_type} is routed as Document",
+        )
+
     return infer_category(asset)
 
 

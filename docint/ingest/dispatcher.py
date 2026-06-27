@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
+import shutil
 
 from docint.ingest.audio import ingest_audio
 from docint.ingest.docx import ingest_docx
 from docint.ingest.image import ingest_image
+from docint.ingest.legacy_office import convert_legacy_office
 from docint.ingest.models import IngestedAsset
 from docint.ingest.pdf import ingest_pdf
 from docint.ingest.pptx import ingest_pptx
@@ -12,7 +15,7 @@ from docint.ingest.tabular import ingest_delimited_file, ingest_json, ingest_xls
 from docint.ingest.text import ingest_text_file
 from docint.ingest.video import ingest_video
 
-SUPPORTED_DOCUMENT_EXTENSIONS = {".pdf", ".txt", ".docx", ".pptx", ".csv", ".tsv", ".xlsx", ".json", ".jpg", ".jpeg", ".png", ".mp3", ".wav", ".m4a", ".mp4", ".avi", ".mov", ".wmv", ".mpeg", ".mpg", ".mkv", ".flv", ".webm", ".3gp", ".mts", ".m2ts", ".vob", ".rmvb"}
+SUPPORTED_DOCUMENT_EXTENSIONS = {".pdf", ".txt", ".doc", ".docx", ".ppt", ".pptx", ".csv", ".tsv", ".xls", ".xlsx", ".json", ".jpg", ".jpeg", ".png", ".mp3", ".wav", ".m4a", ".mp4", ".avi", ".mov", ".wmv", ".mpeg", ".mpg", ".mkv", ".flv", ".webm", ".3gp", ".mts", ".m2ts", ".vob", ".rmvb"}
 
 
 def ingest_asset(file_path: str, filename: str) -> IngestedAsset:
@@ -22,14 +25,56 @@ def ingest_asset(file_path: str, filename: str) -> IngestedAsset:
         return ingest_pdf(file_path, filename)
     if suffix == ".txt":
         return ingest_text_file(file_path, filename)
+    if suffix == ".doc":
+        converted_path = convert_legacy_office(file_path, target_extension="docx")
+        try:
+            asset = ingest_docx(converted_path, filename)
+            return replace(
+                asset,
+                asset_type="doc",
+                source_path=file_path,
+                source="doc_converted_text",
+                mime_type="application/msword",
+                meta={**asset.meta, "converted_from": ".doc", "converted_to": ".docx"},
+            )
+        finally:
+            shutil.rmtree(Path(converted_path).parent, ignore_errors=True)
     if suffix == ".docx":
         return ingest_docx(file_path, filename)
+    if suffix == ".ppt":
+        converted_path = convert_legacy_office(file_path, target_extension="pptx")
+        try:
+            asset = ingest_pptx(converted_path, filename)
+            return replace(
+                asset,
+                asset_type="ppt",
+                source_path=file_path,
+                source="ppt_converted_text",
+                mime_type="application/vnd.ms-powerpoint",
+                meta={**asset.meta, "converted_from": ".ppt", "converted_to": ".pptx"},
+            )
+        finally:
+            shutil.rmtree(Path(converted_path).parent, ignore_errors=True)
     if suffix == ".pptx":
         return ingest_pptx(file_path, filename)
     if suffix == ".csv":
         return ingest_delimited_file(file_path, filename, ",")
     if suffix == ".tsv":
         return ingest_delimited_file(file_path, filename, "\t")
+    if suffix == ".xls":
+        converted_path = convert_legacy_office(file_path, target_extension="xlsx")
+        try:
+            asset = ingest_xlsx(converted_path, filename)
+            return replace(
+                asset,
+                asset_type="xls",
+                source_path=file_path,
+                source="xls_converted_text",
+                mime_type="application/vnd.ms-excel",
+                meta={**asset.meta, "converted_from": ".xls", "converted_to": ".xlsx"},
+            )
+        finally:
+            shutil.rmtree(Path(converted_path).parent, ignore_errors=True)
     if suffix == ".xlsx":
         return ingest_xlsx(file_path, filename)
     if suffix == ".json":
