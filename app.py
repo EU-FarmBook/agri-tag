@@ -22,6 +22,7 @@ import threading
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from datetime import datetime
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -73,8 +74,15 @@ from docint.topics.infer import infer_topics
 from docint.purposes.infer import infer_intended_purposes
 from docint.ingest.dispatcher import ingest_asset, SUPPORTED_DOCUMENT_EXTENSIONS
 from docint.ingest.archive import ARCHIVE_UPLOAD_EXTENSIONS, extract_supported_archive
-from docint.ingest.unit_limits import inspect_document_units
 from docint.video.extract import media_duration_seconds, sample_video_frames, transcribe_video_audio
+from docint.ingest.ai_uploader_criteria import (
+    AUDIO_EXTS,
+    MAX_BYTES,
+    MEDIA_MAX_DURATION_SECONDS,
+    VIDEO_EXTS,
+    CriteriaViolation,
+    validate_asset_against_ai_uploader_criteria,
+)
 from docint.integrations.agrigate import scan_file as agrigate_scan_file, scan_url as agrigate_scan_url
 from docint.integrations.pagesense import extract_url_text
 from docint.features.sections import count_sections
@@ -153,12 +161,12 @@ AUDIO_TRANSCRIPTION_CONFIGURED = bool(
 
 FFMPEG_AVAILABLE = bool(shutil.which("ffmpeg"))
 FFPROBE_AVAILABLE = bool(shutil.which("ffprobe"))
-MAX_AUDIO_DURATION_SEC = int(os.getenv("MAX_AUDIO_DURATION_SEC", "3000"))
-MAX_VIDEO_DURATION_SEC = int(os.getenv("MAX_VIDEO_DURATION_SEC", "3000"))
-MAX_AUDIO_UPLOAD_SIZE_MB = int(os.getenv("MAX_AUDIO_UPLOAD_SIZE_MB", "768"))
-MAX_VIDEO_UPLOAD_SIZE_MB = int(os.getenv("MAX_VIDEO_UPLOAD_SIZE_MB", "1024"))
-MAX_OTHER_UPLOAD_SIZE_MB = int(os.getenv("MAX_OTHER_UPLOAD_SIZE_MB", "50"))
-MAX_REQUEST_BODY_MB = int(os.getenv("MAX_REQUEST_BODY_MB", str(max(MAX_AUDIO_UPLOAD_SIZE_MB, MAX_VIDEO_UPLOAD_SIZE_MB))))
+MAX_AUDIO_DURATION_SEC = MEDIA_MAX_DURATION_SECONDS
+MAX_VIDEO_DURATION_SEC = MEDIA_MAX_DURATION_SECONDS
+MAX_AUDIO_UPLOAD_SIZE_MB = MAX_BYTES // (1024 * 1024)
+MAX_VIDEO_UPLOAD_SIZE_MB = MAX_BYTES // (1024 * 1024)
+MAX_OTHER_UPLOAD_SIZE_MB = MAX_BYTES // (1024 * 1024)
+MAX_REQUEST_BODY_MB = int(os.getenv("MAX_REQUEST_BODY_MB", str(MAX_BYTES // (1024 * 1024))))
 MAX_DOCUMENT_UNITS = int(os.getenv("MAX_DOCUMENT_UNITS", "100"))
 # Raw-text endpoint cap: ~10 A4 pages * ~500 words = 5000 words.
 MAX_TEXT_INPUT_WORDS = int(os.getenv("MAX_TEXT_INPUT_WORDS", "5000"))
@@ -1122,6 +1130,46 @@ def _cache_set(cache: Dict[str, tuple[float, Any, int]], key: str, value: Any, t
             break
         cache.pop(oldest_key, None)
 
+
+
+def _criteria_http_error(exc: CriteriaViolation) -> HTTPException:
+    return HTTPException(status_code=exc.status_code, detail=exc.message)
+
+
+async def _save_upload_to_temp(file: UploadFile, *, suffix: str, max_bytes: int = MAX_BYTES) -> tuple[str, int]:
+    tmp_path = None
+    total = 0
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix or ".bin") as tmp:
+            tmp_path = tmp.name
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > max_bytes:
+                    raise HTTPException(
+                        status_code=413,
+                        detail="File is too large for AI-assisted ingestion. Maximum allowed size is 1 GB.",
+                    )
+                tmp.write(chunk)
+        if total <= 0:
+            raise HTTPException(status_code=400, detail="Empty file")
+        return tmp_path, total
+    except Exception:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+        raise
+
+
+def _validate_ai_uploader_criteria_or_413(file_path: str, filename: str, *, size_bytes: int | None = None) -> dict:
+    try:
+        return validate_asset_against_ai_uploader_criteria(file_path, filename, size_bytes=size_bytes)
+    except CriteriaViolation as exc:
+        raise _criteria_http_error(exc) from exc
 
 def _sample_text_for_llm(text: str, *, max_chars: int) -> str:
     compact = " ".join((text or "").split())
@@ -4064,9 +4112,8 @@ async def classify_endpoint(
         raise HTTPException(status_code=503, detail="Mistral provider selected but MISTRAL_API_KEY is not configured.")
     filename = file.filename or "unknown.pdf"
     suffix = os.path.splitext(filename)[1].lower()
-    document_suffixes = {".pdf", ".txt", ".doc", ".docx", ".ppt", ".pptx"}
-    audio_suffixes = {".mp3", ".wav", ".m4a"}
-    video_suffixes = {".mp4", ".avi", ".mov", ".wmv", ".mpeg", ".mpg", ".mkv", ".flv", ".webm", ".3gp", ".mts", ".m2ts", ".vob", ".rmvb"}
+    audio_suffixes = AUDIO_EXTS
+    video_suffixes = VIDEO_EXTS
     archive_suffix = get_archive_suffix(filename)
     is_archive_upload = archive_suffix in ARCHIVE_UPLOAD_EXTENSIONS
     content_length = request.headers.get("content-length")
@@ -4099,46 +4146,12 @@ async def classify_endpoint(
                 )
         except ValueError:
             pass
-    
-    contents = await file.read()
-    if not contents:
-        raise HTTPException(status_code=400, detail="Empty file")
 
-    file_size_bytes = len(contents)
-    file_size_mb = round(file_size_bytes / (1024 * 1024), 2)
-    if suffix in audio_suffixes and file_size_bytes > MAX_AUDIO_UPLOAD_SIZE_MB * 1024 * 1024:
-        raise HTTPException(
-            status_code=413,
-            detail=f"Audio file too large ({file_size_mb} MB). Maximum allowed is {MAX_AUDIO_UPLOAD_SIZE_MB} MB.",
-        )
-    if suffix in video_suffixes and file_size_bytes > MAX_VIDEO_UPLOAD_SIZE_MB * 1024 * 1024:
-        raise HTTPException(
-            status_code=413,
-            detail=f"Video file too large ({file_size_mb} MB). Maximum allowed is {MAX_VIDEO_UPLOAD_SIZE_MB} MB.",
-        )
-    if suffix not in audio_suffixes | video_suffixes and file_size_bytes > MAX_OTHER_UPLOAD_SIZE_MB * 1024 * 1024:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File too large ({file_size_mb} MB). Maximum allowed is {MAX_OTHER_UPLOAD_SIZE_MB} MB for non-audio/video uploads.",
-        )
-    
     tmp_path = None
     archive_extract_dir = None
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix or ".bin") as tmp:
-            tmp_path = tmp.name
-            tmp.write(contents)
-
-        if suffix in document_suffixes:
-            unit_info = inspect_document_units(tmp_path, filename)
-            if unit_info.available and unit_info.units is not None and unit_info.units > MAX_DOCUMENT_UNITS:
-                raise HTTPException(
-                    status_code=413,
-                    detail=(
-                        f"Document too large ({unit_info.units} {unit_info.unit_label}). "
-                        f"Maximum allowed is {MAX_DOCUMENT_UNITS} {unit_info.unit_label} for synchronous classification."
-                    ),
-                )
+        tmp_path, file_size_bytes = await _save_upload_to_temp(file, suffix=suffix or ".bin")
+        _validate_ai_uploader_criteria_or_413(tmp_path, filename, size_bytes=file_size_bytes)
 
         agri_gate_payload = {
             "enabled": use_agri_gate,
@@ -4166,28 +4179,11 @@ async def classify_endpoint(
 
             archive_results = []
             for inner_path, inner_name in archive.supported_files:
-                inner_suffix = os.path.splitext(inner_name)[1].lower()
-                if inner_suffix in document_suffixes:
-                    unit_info = inspect_document_units(inner_path, inner_name)
-                    if unit_info.available and unit_info.units is not None and unit_info.units > MAX_DOCUMENT_UNITS:
-                        raise HTTPException(
-                            status_code=413,
-                            detail=(
-                                f"Archive member {inner_name!r} is too large ({unit_info.units} {unit_info.unit_label}). "
-                                f"Maximum allowed is {MAX_DOCUMENT_UNITS} {unit_info.unit_label} for synchronous classification."
-                            ),
-                        )
-                if inner_suffix in audio_suffixes | video_suffixes:
-                    duration_sec = media_duration_seconds(inner_path)
-                    max_duration_sec = MAX_AUDIO_DURATION_SEC if inner_suffix in audio_suffixes else MAX_VIDEO_DURATION_SEC
-                    if duration_sec and duration_sec > max_duration_sec:
-                        raise HTTPException(
-                            status_code=413,
-                            detail=(
-                                f"Archive member {inner_name!r} duration too long "
-                                f"({round(duration_sec, 1)} seconds). Maximum allowed is {max_duration_sec} seconds."
-                            ),
-                        )
+                _validate_ai_uploader_criteria_or_413(
+                    inner_path,
+                    inner_name,
+                    size_bytes=Path(inner_path).stat().st_size,
+                )
                 archive_results.append(
                     classify_document(
                         file_path=inner_path,
@@ -4238,18 +4234,6 @@ async def classify_endpoint(
             }
             return _prepare_response(result, debug=debug)
 
-        if suffix in audio_suffixes | video_suffixes:
-            duration_sec = media_duration_seconds(tmp_path)
-            max_duration_sec = MAX_AUDIO_DURATION_SEC if suffix in audio_suffixes else MAX_VIDEO_DURATION_SEC
-            if duration_sec and duration_sec > max_duration_sec:
-                raise HTTPException(
-                    status_code=413,
-                    detail=(
-                        f"{'Audio' if suffix in audio_suffixes else 'Video'} duration too long "
-                        f"({round(duration_sec, 1)} seconds). Maximum allowed is {max_duration_sec} seconds."
-                    ),
-                )
-        
         result = classify_document(
             file_path=tmp_path,
             filename=filename,
@@ -4387,8 +4371,8 @@ async def classify_media_llm_endpoint(
 
     filename = file.filename or "unknown.bin"
     suffix = os.path.splitext(filename)[1].lower()
-    audio_suffixes = {".mp3", ".wav", ".m4a"}
-    video_suffixes = {".mp4", ".avi", ".mov", ".wmv", ".mpeg", ".mpg", ".mkv", ".flv", ".webm", ".3gp", ".mts", ".m2ts", ".vob", ".rmvb"}
+    audio_suffixes = AUDIO_EXTS
+    video_suffixes = VIDEO_EXTS
 
     if suffix not in audio_suffixes | video_suffixes:
         blocked_suffix = get_blocked_suffix(filename)
@@ -4420,44 +4404,16 @@ async def classify_media_llm_endpoint(
         except ValueError:
             pass
 
-    contents = await file.read()
-    if not contents:
-        raise HTTPException(status_code=400, detail="Empty file")
-
-    file_size_bytes = len(contents)
-    file_size_mb = round(file_size_bytes / (1024 * 1024), 2)
-    if suffix in audio_suffixes and file_size_bytes > MAX_AUDIO_UPLOAD_SIZE_MB * 1024 * 1024:
-        raise HTTPException(
-            status_code=413,
-            detail=f"Audio file too large ({file_size_mb} MB). Maximum allowed is {MAX_AUDIO_UPLOAD_SIZE_MB} MB.",
-        )
-    if suffix in video_suffixes and file_size_bytes > MAX_VIDEO_UPLOAD_SIZE_MB * 1024 * 1024:
-        raise HTTPException(
-            status_code=413,
-            detail=f"Video file too large ({file_size_mb} MB). Maximum allowed is {MAX_VIDEO_UPLOAD_SIZE_MB} MB.",
-        )
-
     category_used = "Audio" if suffix in audio_suffixes else "Video"
     stage_timings_ms: Dict[str, float] = {}
     tmp_path = None
 
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix or ".bin") as tmp:
-            tmp_path = tmp.name
-            tmp.write(contents)
-
+        tmp_path, file_size_bytes = await _save_upload_to_temp(file, suffix=suffix or ".bin")
         duration_stage_start = time.time()
-        duration_sec = media_duration_seconds(tmp_path)
+        criteria_info = _validate_ai_uploader_criteria_or_413(tmp_path, filename, size_bytes=file_size_bytes)
+        duration_sec = float(criteria_info.get("duration_seconds") or 0.0)
         stage_timings_ms["duration_probe_ms"] = round((time.time() - duration_stage_start) * 1000, 2)
-        max_duration_sec = MAX_AUDIO_DURATION_SEC if category_used == "Audio" else MAX_VIDEO_DURATION_SEC
-        if duration_sec and duration_sec > max_duration_sec:
-            raise HTTPException(
-                status_code=413,
-                detail=(
-                    f"{category_used} duration too long ({round(duration_sec, 1)} seconds). "
-                    f"Maximum allowed is {max_duration_sec} seconds."
-                ),
-            )
 
         transcription_stage_start = time.time()
         if category_used == "Audio":
