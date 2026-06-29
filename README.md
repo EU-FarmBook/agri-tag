@@ -305,6 +305,7 @@ Important runtime constraint:
 - OCR fallback currently applies to PDFs and images
 - OCR also applies to image files
 - vision routing currently applies to PDFs and image files
+- Office page inspection/conversion for `.doc`, `.docx`, `.ppt`, `.pptx`, `.xls`, and `.xlsx` requires LibreOffice/`soffice` on `PATH`; the Docker image installs `libreoffice` for this; supervisor/non-Docker deployments must install LibreOffice on the server OS so `/workspace/services/agri-tag/.venv/bin/uvicorn` can find `libreoffice` or `soffice` on `PATH`.
 - audio transcription currently applies to audio files when the transcription backend is configured
 - video frame sampling currently applies to video files when FFmpeg is available
 - video audio transcription currently applies to video files when both FFmpeg and the transcription backend are configured

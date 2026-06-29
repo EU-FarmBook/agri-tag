@@ -6,6 +6,7 @@ Alternative Python-based startup script for the Agri-Tag API.
 import os
 import sys
 import subprocess
+import shutil
 from pathlib import Path
 
 
@@ -47,6 +48,10 @@ def main():
     port = int(os.getenv("PORT", "8000"))
     workers = int(os.getenv("WORKERS", "1"))
     
+    office_conversion_available = bool(
+        shutil.which("libreoffice") or shutil.which("soffice")
+    )
+
     llm_configured = bool(
         os.getenv("DOCINT_LLM_BASE_URL") and os.getenv("DOCINT_LLM_MODEL")
     )
@@ -56,6 +61,7 @@ def main():
     print(f"  Port: {port}")
     print(f"  Workers: {workers}")
     print(f"  LLM Configured: {'Yes' if llm_configured else 'No (heuristics only)'}")
+    print(f"  Office Conversion: {'Yes' if office_conversion_available else 'No (install LibreOffice/soffice for Office uploads)'}")
     
     print(f"\nAPI Documentation: http://localhost:{port}/docs")
     print("=" * 60)

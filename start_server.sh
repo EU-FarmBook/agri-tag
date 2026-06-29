@@ -22,8 +22,14 @@ else
     echo -e "${RED}Warning: No virtual environment found. Using system Python.${NC}"
 fi
 
+# Office documents/spreadsheets are converted through LibreOffice for page-limit checks.
+if ! command -v libreoffice &> /dev/null && ! command -v soffice &> /dev/null; then
+    echo -e "${YELLOW}Warning: LibreOffice/soffice is not installed. Office uploads (.doc/.docx/.ppt/.pptx/.xls/.xlsx) cannot be page-inspected.${NC}"
+fi
+
 # Check if uvicorn is installed
 if ! command -v uvicorn &> /dev/null; then
+
     echo -e "${RED}Error: uvicorn is not installed. Install with: pip install uvicorn${NC}"
     exit 1
 fi
