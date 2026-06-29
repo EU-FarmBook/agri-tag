@@ -176,6 +176,7 @@ VISION_RENDER_DPI = int(os.getenv("VISION_RENDER_DPI", "150"))
 # vision_max_pages is clamped to this, so no caller can exceed the VLM's limit and
 # trigger a (silently caught) rejected vision call.
 VISION_MAX_PAGES_CAP = int(os.getenv("VISION_MAX_PAGES_CAP", "8"))
+VIDEO_VISION_MAX_FRAMES = int(os.getenv("VIDEO_VISION_MAX_FRAMES", "1"))
 # Sampling temperature for the classification LLM calls (text + vision subtype).
 # Default 0 = deterministic/reproducible (no run-to-run flip-flopping on the same input).
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))
@@ -2263,6 +2264,9 @@ def classify_document(
         rationale=category_result.rationale,
     )
     stage_timings_ms["category_inference_ms"] = round((time.time() - stage_start) * 1000, 2)
+
+    if category_result.category == "Video":
+        vision_max_pages = max(1, min(vision_max_pages, VIDEO_VISION_MAX_FRAMES))
     
     # 2) OCR fallback or audio transcription if needed
     stage_start = time.time()
