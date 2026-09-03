@@ -3,11 +3,11 @@
 # -------------------------
 # Build stage
 # -------------------------
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
-ARG TORCH_VERSION=2.11.0
+ARG TORCH_VERSION=2.12.1
 ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 
 # Install build dependencies (only needed for building wheels)
@@ -28,13 +28,15 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # -------------------------
 # Runtime stage
 # -------------------------
-FROM python:3.11-slim
+FROM python:3.12-slim
+
+LABEL org.opencontainers.image.source="https://github.com/EU-FarmBook/agri-tag"
 
 WORKDIR /app
 
 ARG AGRI_EMBEDDING_MODEL=intfloat/multilingual-e5-small
 ARG PRELOAD_AGRI_MODEL=false
-ARG TORCH_VERSION=2.11.0
+ARG TORCH_VERSION=2.12.1
 ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 
 # Install runtime OS dependencies (PDF + OCR + Office conversion)
@@ -59,8 +61,10 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 COPY --from=builder /usr/local /usr/local
 
 # Pre-download the agriculture embedding model so first inference is warm.
-RUN --mount=type=cache,target=/app/.cache/huggingface \
-    mkdir -p /app/.cache/huggingface \
+# No cache mount here: a cache mount is not part of the resulting layer, so a
+# model downloaded into one is discarded when the build finishes. It has to be
+# written to a real directory to be baked into the image.
+RUN mkdir -p /app/.cache/huggingface \
     && if [ "${PRELOAD_AGRI_MODEL}" = "true" ]; then \
         python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('${AGRI_EMBEDDING_MODEL}', device='cpu')"; \
        else \
