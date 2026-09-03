@@ -25,6 +25,19 @@ def _normalized_base_url(url: str) -> str:
     return (url or "").rstrip("/")
 
 
+def _extractor_auth() -> Optional[tuple[str, str]]:
+    """Basic-auth credentials for PageSense, or None when unset.
+
+    PageSense's /api/extract has no authentication of its own; the deployment
+    gates it with HTTP basic auth at the ingress, so an unauthenticated call
+    comes back as 401 with no useful body. Left unset (as in a local run
+    against an ungated instance) the request is sent without credentials.
+    """
+    user = os.getenv("URL_CONTENT_EXTRACTOR_USER", "").strip()
+    password = os.getenv("URL_CONTENT_EXTRACTOR_PASSWORD", "")
+    return (user, password) if user else None
+
+
 def extract_url_text(url: str) -> PageSenseResult:
     base_url = _normalized_base_url(os.getenv("URL_CONTENT_EXTRACTOR_BASE", ""))
     timeout = float(os.getenv("EXTRACTOR_TIMEOUT", "60"))
@@ -43,7 +56,7 @@ def extract_url_text(url: str) -> PageSenseResult:
             rationale="PageSense base URL is not configured",
         )
 
-    with httpx.Client(timeout=timeout) as client:
+    with httpx.Client(timeout=timeout, auth=_extractor_auth()) as client:
         try:
             response = client.post(
                 f"{base_url}/api/extract",
