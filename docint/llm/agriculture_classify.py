@@ -6,6 +6,8 @@ from typing import Any, Dict
 
 from openai import OpenAI
 
+from ._tuning import reasoning_kwargs
+
 
 SYSTEM_PROMPT = """You are an agriculture relevance classifier for knowledge objects
 (documents, datasets, transcripts). Decide whether the content is agriculture-related.
@@ -66,6 +68,7 @@ def llm_classify_agriculture_text(
         text = text[:head_len] + "\n\n[...TRUNCATED...]\n\n" + text[-tail_len:]
 
     resp = client.chat.completions.create(
+        **reasoning_kwargs(),
         model=model,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},

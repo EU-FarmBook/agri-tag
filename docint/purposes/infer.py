@@ -33,6 +33,8 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
+from docint.llm._tuning import reasoning_kwargs
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PURPOSES_PATH = REPO_ROOT / "data_model" / "runtime" / "purposes" / "intended_purposes.json"
 
@@ -225,6 +227,7 @@ def _infer_llm(text: str, *, base_url: str, api_key: str, model: str, max_result
     try:
         client = OpenAI(base_url=base_url, api_key=api_key, timeout=timeout)
         resp = client.chat.completions.create(
+            **reasoning_kwargs(),
             model=model,
             messages=_build_llm_prompt(text),
             temperature=float(os.getenv("LLM_TEMPERATURE", "0")),

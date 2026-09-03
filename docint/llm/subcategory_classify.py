@@ -17,6 +17,8 @@ from pathlib import Path
 
 from openai import OpenAI
 
+from ._tuning import reasoning_kwargs
+
 from docint.subtypes.unified import (
     allowed_unified_keys_for_category,
     load_category_profiles,
@@ -362,6 +364,7 @@ def llm_classify_subcategories_text(
     ]
     
     resp = client.chat.completions.create(
+        **reasoning_kwargs(),
         model=model,
         messages=messages,
         temperature=temperature,
@@ -424,7 +427,7 @@ def llm_classify_document_with_agriculture(
         {"role": "user", "content": schema + "\n\nDOCUMENT TEXT:\n" + text},
     ]
 
-    resp = client.chat.completions.create(model=model, messages=messages, temperature=temperature)
+    resp = client.chat.completions.create(**reasoning_kwargs(), model=model, messages=messages, temperature=temperature)
     raw = resp.choices[0].message.content or ""
     data = _parse_llm_json_response(raw, label="document+agriculture LLM")
 
@@ -471,6 +474,7 @@ def llm_classify_dataset_subcategories_text(
     ]
 
     resp = client.chat.completions.create(
+        **reasoning_kwargs(),
         model=model,
         messages=messages,
         temperature=temperature,
@@ -525,6 +529,7 @@ def llm_classify_software_subcategories_text(
     ]
 
     resp = client.chat.completions.create(
+        **reasoning_kwargs(),
         model=model,
         messages=messages,
         temperature=temperature,
@@ -580,6 +585,7 @@ def llm_classify_image_with_vision(
     messages = [{"role": "user", "content": content}]
 
     resp = client.chat.completions.create(
+        **reasoning_kwargs(),
         model=model,
         messages=messages,
         temperature=temperature,
@@ -617,6 +623,7 @@ def llm_classify_audio_subcategories_text(
     ]
 
     resp = client.chat.completions.create(
+        **reasoning_kwargs(),
         model=model,
         messages=messages,
         temperature=temperature,
@@ -668,6 +675,7 @@ def llm_classify_video_subcategories_text(
     ]
 
     resp = client.chat.completions.create(
+        **reasoning_kwargs(),
         model=model,
         messages=messages,
         temperature=temperature,
@@ -726,6 +734,7 @@ def llm_classify_video_with_vision(
 
     messages = [{"role": "user", "content": content}]
     resp = client.chat.completions.create(
+        **reasoning_kwargs(),
         model=model,
         messages=messages,
         temperature=temperature,
@@ -818,6 +827,7 @@ def llm_classify_subcategories_vision_batch(
     ]
     
     resp = client.chat.completions.create(
+        **reasoning_kwargs(),
         model=model,
         messages=messages,
         temperature=temperature,

@@ -6,6 +6,8 @@ from typing import Any, Dict, Optional
 
 from openai import OpenAI
 
+from ._tuning import reasoning_kwargs
+
 
 SYSTEM_PROMPT = """You are a knowledge-object eligibility classifier.
 The text may be in ANY language; judge by meaning, not language.
@@ -63,6 +65,7 @@ def llm_classify_ko_eligibility_text(
         text = text[:head_len] + "\n\n[...]\n\n" + text[mid_start:mid_end] + "\n\n[...]\n\n" + text[-tail_len:]
 
     resp = client.chat.completions.create(
+        **reasoning_kwargs(),
         model=model,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
